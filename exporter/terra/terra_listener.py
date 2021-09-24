@@ -75,9 +75,9 @@ class _TerraListener(ConsumerProducerMixin):
             start_time = datetime.datetime.now()
             self.terra_exporter.export(exp.process_uuid, exp.submission_uuid, exp.job_id)
             end_time = datetime.datetime.now()
-            elapsed_time_ms = int((end_time - start_time).seconds * 1000)
+            elapsed_time_ms = (end_time - start_time).microseconds / 1000
             self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {exp.submission_uuid})')
-            self.logger.info(f'Export time: {str(elapsed_time_ms)} ms')
+            self.logger.info(f'Export time: {elapsed_time_ms} ms')
             self.log_complete_assay(exp.job_id, exp.process_id)
 
             self.producer.publish(json.loads(body),
