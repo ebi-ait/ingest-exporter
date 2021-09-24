@@ -1,17 +1,16 @@
+import datetime
+import json
+import logging
+
+from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 from kombu.mixins import ConsumerProducerMixin
 from kombu import Connection, Consumer, Message, Queue, Exchange
+from typing import Type, List, Dict
 
 from exporter.terra.terra_exporter import TerraExporter
 from exporter.amqp import QueueConfig, AmqpConnConfig
-
-from typing import Type, List, Dict
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-
 from exporter.terra.terra_export_job import TerraExportJobService
-
-import logging
-import json
 
 
 class ExperimentMessageParseExpection(Exception):
@@ -73,8 +72,12 @@ class _TerraListener(ConsumerProducerMixin):
         try:
             exp = ExperimentMessage.from_dict(json.loads(body))
             self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {exp.submission_uuid})')
+            start_time = datetime.datetime.now()
             self.terra_exporter.export(exp.process_uuid, exp.submission_uuid, exp.job_id)
+            end_time = datetime.datetime.now()
+            elapsed_time_ms = int((end_time - start_time).seconds * 1000)
             self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {exp.submission_uuid})')
+            self.logger.info(f'Export time: {str(elapsed_time_ms)} ms')
             self.log_complete_assay(exp.job_id, exp.process_id)
 
             self.producer.publish(json.loads(body),
