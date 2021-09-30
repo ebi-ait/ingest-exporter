@@ -111,8 +111,7 @@ class MetadataResource:
             concrete_type = data['content']['describedBy'].rsplit('/', 1)[-1]
             version_with_schema_fields = SCHEMA_VERSIONS_WITHOUT_SCHEMA_FIELDS.get(concrete_type)
             if MetadataResource.version_has_schema_fields(schema_semver, version_with_schema_fields):
-                schema_major_version = int(schema_semver.split(".")[0])
-                schema_minor_version = int(schema_semver.split(".")[1])
+                schema_major_version, schema_minor_version, _ = [int(x) for x in schema_semver.split(".")]
                 return MetadataProvenance(uuid, submission_date, update_date, schema_major_version,
                                           schema_minor_version)
             else:
