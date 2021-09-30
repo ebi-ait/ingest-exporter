@@ -10,3 +10,4 @@ cachetools
 smart_open[all]
 google-api-python-client
 polling
+packaging
