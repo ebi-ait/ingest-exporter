@@ -25,7 +25,6 @@ class TerraExporter:
         self.job_service = job_service
 
         self.logger = logging.getLogger(LOGGER_NAME)
-        self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
 
     @utils.exec_time(logging.getLogger(LOGGER_NAME), logging.INFO)
