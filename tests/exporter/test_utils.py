@@ -9,7 +9,7 @@ from exporter import utils
 
 class UtilsTest(TestCase):
     def setUp(self) -> None:
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('test_logger')
         handler = logging.StreamHandler()
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
@@ -89,7 +89,7 @@ class UtilsTest(TestCase):
         hello('name')
 
         capture.check((
-            'test_utils',
+            'test_logger',
             'INFO',
-            f"test_utils.UtilsTest.test_log_exec_time.<locals>.hello ( name = 'name' ) exec time is: {elapsed_time}"
+            f"tests.exporter.test_utils.UtilsTest.test_log_exec_time.<locals>.hello ( name = 'name' ) exec time is: {elapsed_time}"
         ))

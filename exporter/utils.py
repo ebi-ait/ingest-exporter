@@ -31,8 +31,6 @@ def exec_time(logger: logging.Logger, level: int):
             exec_time_ms = (end_time - start_time).total_seconds() * 1000
             func_args = inspect.signature(func).bind(*args, **kwargs).arguments
             func_args_str = ", ".join(map("{0[0]} = {0[1]!r}".format, func_args.items()))
-            print(logger.name)
-            print(logger.level)
             logger.log(level, f'{func.__module__}.{func.__qualname__} ( {func_args_str} ) exec time is: {exec_time_ms}')
             return result
         return inner
