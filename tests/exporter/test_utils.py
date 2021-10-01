@@ -91,5 +91,5 @@ class UtilsTest(TestCase):
         capture.check((
             'test_logger',
             'INFO',
-            f"tests.exporter.test_utils.UtilsTest.test_log_exec_time.<locals>.hello ( name = 'name' ) exec time is: {elapsed_time}"
+            f"hello ( name = 'name' ) exec time is: {elapsed_time}"
         ))
