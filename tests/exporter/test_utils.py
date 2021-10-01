@@ -75,7 +75,7 @@ class UtilsTest(TestCase):
 
     @log_capture()
     @patch('exporter.utils.datetime')
-    def test_log_exec_time(self, mock_datetime, capture):
+    def test_log_exec_time__logs_exec_time(self, mock_datetime, capture):
         start_time = datetime(2021, 10, 1, 12, 00)
         min_after = 5
         end_time = datetime(2021, 10, 1, 12, min_after)
@@ -93,3 +93,12 @@ class UtilsTest(TestCase):
             'INFO',
             f"hello ( name = 'name' ) exec time is: {elapsed_time}"
         ))
+
+    def test_log_exec_time__return_wrapped_func_output(self):
+        @utils.exec_time(self.logger, logging.INFO)
+        def echo(message: str):
+            return message
+
+        message = echo('message')
+
+        self.assertEqual(message, 'message')
