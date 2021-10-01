@@ -73,6 +73,10 @@ class UtilsTest(TestCase):
         # expect:
         self.assertEqual(date_string, utils.to_dcp_version(date_string))
 
+    @utils.exec_time(logging.getLogger('test_logger'), logging.INFO)
+    def hello(self, name: str):
+        print(f'hello {name}')
+
     @log_capture()
     @patch('exporter.utils.datetime')
     def test_log_exec_time__logs_exec_time(self, mock_datetime, capture):
@@ -82,11 +86,7 @@ class UtilsTest(TestCase):
         mock_datetime.now.side_effect = [start_time, end_time]
         elapsed_time = (end_time - start_time).total_seconds() * 1000
 
-        @utils.exec_time(self.logger, logging.INFO)
-        def hello(name: str):
-            print(f'hello {name}')
-
-        hello('name')
+        self.hello('name')
 
         capture.check((
             'test_logger',
