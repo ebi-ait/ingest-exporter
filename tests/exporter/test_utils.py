@@ -1,10 +1,18 @@
+import logging
 from datetime import datetime
 from unittest import TestCase
+from testfixtures import log_capture
+from unittest.mock import patch
 
 from exporter import utils
 
 
 class UtilsTest(TestCase):
+    def setUp(self) -> None:
+        self.logger = logging.getLogger(__name__)
+        handler = logging.StreamHandler()
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
 
     def test_parse_date_string__returns_correct_date_obj__given_iso(self):
         # given:
@@ -64,3 +72,24 @@ class UtilsTest(TestCase):
 
         # expect:
         self.assertEqual(date_string, utils.to_dcp_version(date_string))
+
+    @log_capture()
+    @patch('exporter.utils.datetime')
+    def test_log_exec_time(self, mock_now, capture):
+        start_time = datetime(2021, 10, 1, 12, 00)
+        min_after = 5
+        end_time = datetime(2021, 10, 1, 12, min_after)
+        mock_now.now.side_effect = [start_time, end_time]
+        elapsed_time = (end_time - start_time).total_seconds() * 1000
+
+        @utils.exec_time(self.logger, logging.INFO)
+        def hello(name: str):
+            print(f'hello {name}')
+
+        hello('name')
+
+        capture.check((
+            'test_utils',
+            'INFO',
+            f"test_utils.UtilsTest.test_log_exec_time.<locals>.hello ( name = 'name' ) exec time is: {elapsed_time}"
+        ))

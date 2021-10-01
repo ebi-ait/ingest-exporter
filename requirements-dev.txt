@@ -1,4 +1,5 @@
 mock
 nose
 mypy
+testfixtures
 -r requirements.txt
