@@ -8,6 +8,8 @@ import logging
 
 from exporter.terra.terra_export_job import TerraExportJobService
 
+LOGGER_NAME = __name__
+
 
 class TerraExporter:
     def __init__(self,
@@ -22,11 +24,11 @@ class TerraExporter:
         self.dcp_staging_client = dcp_staging_client
         self.job_service = job_service
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(LOGGER_NAME)
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
 
-    @utils.exec_time(logging.getLogger(__name__), logging.INFO)
+    @utils.exec_time(logging.getLogger(LOGGER_NAME), logging.INFO)
     def export(self, process_uuid, submission_uuid, export_job_id):
         process = self.get_process(process_uuid)
         project = self.project_for_process(process)
