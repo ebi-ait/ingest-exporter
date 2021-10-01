@@ -75,11 +75,11 @@ class UtilsTest(TestCase):
 
     @log_capture()
     @patch('exporter.utils.datetime')
-    def test_log_exec_time(self, mock_now, capture):
+    def test_log_exec_time(self, mock_datetime, capture):
         start_time = datetime(2021, 10, 1, 12, 00)
         min_after = 5
         end_time = datetime(2021, 10, 1, 12, min_after)
-        mock_now.now.side_effect = [start_time, end_time]
+        mock_datetime.now.side_effect = [start_time, end_time]
         elapsed_time = (end_time - start_time).total_seconds() * 1000
 
         @utils.exec_time(self.logger, logging.INFO)
