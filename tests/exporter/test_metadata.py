@@ -7,43 +7,28 @@ from exporter.metadata import MetadataResource, MetadataService, MetadataParseEx
 
 
 class MetadataResourceTest(TestCase):
-
     def test_provenance_from_dict(self):
         # given:
         uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
-        data = {
-            'uuid': {'uuid': uuid_value},
-            'submissionDate': 'a submission date',
-            'updateDate': 'an update date',
-            'dcpVersion': '2019-12-02T13:40:50.520Z',
-            'content': {
-                'describedBy': 'https://some-schema/1.2.3'
-            }
-        }
+        data = self._create_test_data(uuid_value)
+        data['content']['describedBy'] = 'https://some-schema/1.2.3'
 
         # when:
         metadata_provenance = MetadataResource.provenance_from_dict(data)
 
         # then:
         self.assertIsNotNone(metadata_provenance)
-        self.assertEqual(uuid_value, metadata_provenance.document_id)
-        self.assertEqual('a submission date', metadata_provenance.submission_date)
-        self.assertEqual('an update date', metadata_provenance.update_date)
+        self.assertEqual(data['uuid']['uuid'], metadata_provenance.document_id)
+        self.assertEqual('a date', metadata_provenance.submission_date)
+        self.assertEqual('another date', metadata_provenance.update_date)
         self.assertEqual(1, metadata_provenance.schema_major_version)
         self.assertEqual(2, metadata_provenance.schema_minor_version)
 
     def test_provenance_from_dict_older_version(self):
         # given:
         uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
-        data = {
-            'uuid': {'uuid': uuid_value},
-            'submissionDate': 'a submission date',
-            'updateDate': 'an update date',
-            'dcpVersion': '2019-12-02T13:40:50.520Z',
-            'content': {
-                'describedBy': 'https://13.1.1/cell_suspension'
-            }
-        }
+        data = self._create_test_data(uuid_value)
+        data['content']['describedBy'] = 'https://13.1.1/cell_suspension'
 
         # when:
         metadata_provenance = MetadataResource.provenance_from_dict(data)
@@ -56,24 +41,13 @@ class MetadataResourceTest(TestCase):
     def test_provenance_from_dict_newer_version(self):
         # given:
         uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
-        data = {
-            'uuid': {'uuid': uuid_value},
-            'submissionDate': 'a submission date',
-            'updateDate': 'an update date',
-            'dcpVersion': '2019-12-02T13:40:50.520Z',
-            'content': {
-                'describedBy': 'https://15.1.1/cell_suspension'
-            }
-        }
+        data = self._create_test_data(uuid_value)
+        data['content']['describedBy'] = 'https://15.1.1/cell_suspension'
 
         # when:
         metadata_provenance = MetadataResource.provenance_from_dict(data)
 
         # then:
-        self.assertIsNotNone(metadata_provenance)
-        self.assertEqual(uuid_value, metadata_provenance.document_id)
-        self.assertEqual('a submission date', metadata_provenance.submission_date)
-        self.assertEqual('an update date', metadata_provenance.update_date)
         self.assertEqual(15, metadata_provenance.schema_major_version)
         self.assertEqual(1, metadata_provenance.schema_minor_version)
 
@@ -164,15 +138,18 @@ class DataFileTest(TestCase):
 
     def test_parse_bucket_from_cloud_url(self):
         test_cloud_url = "s3://test-bucket/somefile.txt"
-        test_data_file = DataFile("mock_uuid", "mock_version", "mock_file_name", test_cloud_url, "application/txt", "5", self.mock_checksums())
+        test_data_file = DataFile("mock_uuid", "mock_version", "mock_file_name", test_cloud_url, "application/txt", "5",
+                                  self.mock_checksums())
         self.assertEqual(test_data_file.source_bucket(), "test-bucket")
 
     def test_parse_key_from_cloud_url(self):
         test_cloud_url = "s3://test-bucket/somefile.txt"
-        test_data_file = DataFile("mock_uuid", "mock_version", "mock_file_name", test_cloud_url, "application/txt", "5", self.mock_checksums())
+        test_data_file = DataFile("mock_uuid", "mock_version", "mock_file_name", test_cloud_url, "application/txt", "5",
+                                  self.mock_checksums())
         self.assertEqual(test_data_file.source_key(), "somefile.txt")
 
     def test_parse_nested_key_from_cloud_url(self):
         test_cloud_url = "s3://test-bucket/somedir/somesubdir/somefile.txt"
-        test_data_file = DataFile("mock_uuid", "mock_version", "mock_file_name", test_cloud_url, "application/txt", "5", self.mock_checksums())
+        test_data_file = DataFile("mock_uuid", "mock_version", "mock_file_name", test_cloud_url, "application/txt", "5",
+                                  self.mock_checksums())
         self.assertEqual(test_data_file.source_key(), "somedir/somesubdir/somefile.txt")
