@@ -2,10 +2,13 @@ from ingest.api.ingestapi import IngestApi
 from exporter.metadata import MetadataResource, MetadataService, DataFile
 from exporter.graph.graph_crawler import GraphCrawler
 from exporter.terra.dcp_staging_client import DcpStagingClient
+from exporter import utils
 
 import logging
 
 from exporter.terra.terra_export_job import TerraExportJobService
+
+LOGGER_NAME = __name__
 
 
 class TerraExporter:
@@ -21,9 +24,10 @@ class TerraExporter:
         self.dcp_staging_client = dcp_staging_client
         self.job_service = job_service
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(LOGGER_NAME)
         self.logger.setLevel(logging.INFO)
 
+    @utils.exec_time(logging.getLogger(LOGGER_NAME), logging.INFO)
     def export(self, process_uuid, submission_uuid, export_job_id):
         process = self.get_process(process_uuid)
         project = self.project_for_process(process)
