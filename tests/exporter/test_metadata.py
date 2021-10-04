@@ -29,6 +29,8 @@ class MetadataResourceTest(TestCase):
         self.assertEqual(uuid_value, metadata_provenance.document_id)
         self.assertEqual('a submission date', metadata_provenance.submission_date)
         self.assertEqual('an update date', metadata_provenance.update_date)
+        self.assertEqual(1, metadata_provenance.schema_major_version)
+        self.assertEqual(2, metadata_provenance.schema_minor_version)
 
     def test_provenance_from_dict_older_version(self):
         # given:
@@ -50,6 +52,30 @@ class MetadataResourceTest(TestCase):
         self.assertIsNotNone(metadata_provenance)
         self.assertIsNone(metadata_provenance.to_dict().get('schema_major_version'))
         self.assertIsNone(metadata_provenance.to_dict().get('schema_minor_version'))
+
+    def test_provenance_from_dict_newer_version(self):
+        # given:
+        uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
+        data = {
+            'uuid': {'uuid': uuid_value},
+            'submissionDate': 'a submission date',
+            'updateDate': 'an update date',
+            'dcpVersion': '2019-12-02T13:40:50.520Z',
+            'content': {
+                'describedBy': 'https://15.1.1/cell_suspension'
+            }
+        }
+
+        # when:
+        metadata_provenance = MetadataResource.provenance_from_dict(data)
+
+        # then:
+        self.assertIsNotNone(metadata_provenance)
+        self.assertEqual(uuid_value, metadata_provenance.document_id)
+        self.assertEqual('a submission date', metadata_provenance.submission_date)
+        self.assertEqual('an update date', metadata_provenance.update_date)
+        self.assertEqual(15, metadata_provenance.schema_major_version)
+        self.assertEqual(1, metadata_provenance.schema_minor_version)
 
     def test_provenance_from_dict_fail_fast(self):
         # given:
