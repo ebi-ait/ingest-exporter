@@ -46,6 +46,7 @@ class TerraExporter:
         
         self.dcp_staging_client.write_metadatas(experiment_graph.nodes.get_nodes(), project.uuid)
         self.dcp_staging_client.write_links(experiment_graph.links, process_uuid, process.dcp_version, project.uuid)
+        self.dcp_staging_client.write_staging_area_json(project.uuid)
 
     # Only the exporter process which is successful should be polling GCP Transfer service if the job is complete
     # This is to avoid hitting the rate limit 500 requests per 100 sec https://cloud.google.com/storage-transfer/quotas
