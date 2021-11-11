@@ -180,3 +180,8 @@ class DcpStagingClient:
                 raise Exception("ingest_client must be set")
             else:
                 return DcpStagingClient(self.gcs_storage, self.gcs_xfer, self.schema_service, self.ingest_client)
+
+    def write_staging_area_json(self, project_uuid: str):
+        dest_object_key = f'{project_uuid}/staging_area.json'
+        data_stream = DcpStagingClient.dict_to_json_stream({'is_delta': False})
+        self.write_to_staging_bucket(dest_object_key, data_stream)
