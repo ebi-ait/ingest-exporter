@@ -1,0 +1,25 @@
+@startuml
+  actor User
+  participant UI
+  participant Core
+  participant "State Tracker" as State
+  participant Exporter
+  participant GCPTS as "GCP Transfer Service"
+
+  User->>UI: given a VALID submission, clicks submit
+  UI-->>Core: requests for export, triggers exporting
+  Core-->>Exporter: sends messages per assay
+  Exporter-->>State: sends a message \n when a message is being processed \n and when it's finished.
+  State-->>Core: sets submission state to EXPORTING \n when not all messages have finished yet
+
+  Exporter-->>GCPTS: if needed to export data, triggers data file transfer
+  GCPTS-->>Terra: transfers data files to Terra staging area from upload area
+  Exporter-->>Exporter: waits til data transfer is complete
+  Exporter-->>Core: crawls graph from assay process to donor
+  Exporter-->>Terra: creates all metadata files \n which are included in the graph in the Terra staging area
+  Exporter-->>Terra:  creates links.json file in the Terra staging area
+  State-->>State: keeps track that all messages are processed
+  State-->>Core: sets submission state to EXPORTED
+
+  User->> Core: waits until submission is EXPORTED
+@enduml
