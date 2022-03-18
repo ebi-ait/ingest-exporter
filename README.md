@@ -4,7 +4,7 @@
 
 Component that handles the generation of assay manifests for archiving and exporting of HCA metadata and data files to DCP
  
-This component listens for messages from the Ingest Core using RabbitMQ. When a submission is valid and complete (i.e. all data files have been uploaded to the upload area), Ingest Core will notify this component and this will trigger the exporting. 
+This component listens for messages from the Ingest Core using RabbitMQ. When a submission is valid and complete (i.e. all data files have been uploaded to the upload area), Ingest Core will notify this component and this will trigger the exporting or "assay" manifests generation. 
 
 ## Message listeners
 
