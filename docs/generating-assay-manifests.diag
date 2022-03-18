@@ -17,5 +17,4 @@
   Exporter-->>State: sends a message when it finished processing an assay
   State-->>State: keeps track of all assay messages and checks if all are finished
   State-->>Core: when all assay messages finished,\n it sets submissionState to ARCHIVING\n this signals that user can start the manual process
-
 @enduml
