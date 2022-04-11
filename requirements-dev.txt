@@ -1,5 +1,5 @@
 mock
 nose
 mypy
-testfixtures
+testfixtures==6.18.5
 -r requirements.txt

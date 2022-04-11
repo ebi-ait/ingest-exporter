@@ -46,7 +46,7 @@ class UtilsTest(TestCase):
     def hello(self, name: str):
         print(f'hello {name}')
 
-    @log_capture()
+    @log_capture
     @patch('exporter.utils.datetime')
     def test_log_exec_time__logs_exec_time(self, mock_datetime, capture):
         start_time = datetime(2021, 10, 1, 12, 00)
