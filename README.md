@@ -1,13 +1,25 @@
-[![Docker Repository on Quay](https://quay.io/repository/humancellatlas/ingest-exporter/status "Docker Repository on Quay")](https://quay.io/repository/humancellatlas/ingest-demo)
-[![Build Status](https://travis-ci.org/HumanCellAtlas/ingest-exporter.svg?branch=master)](https://travis-ci.org/HumanCellAtlas/ingest-exporter)
-[![Maintainability](https://api.codeclimate.com/v1/badges/8c1ff877fe9c89810c14/maintainability)](https://codeclimate.com/github/HumanCellAtlas/ingest-exporter/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/8c1ff877fe9c89810c14/test_coverage)](https://codeclimate.com/github/HumanCellAtlas/ingest-exporter/test_coverage)
+[![Docker Repository on Quay](https://quay.io/repository/ebi-ait/ingest-exporter/status "Docker Repository on Quay")](https://quay.io/repository/ebi-ait/ingest-exporter)
 
 # ingest-exporter
 
-Component that handles the generation of file manifests from submissions
+Component that handles the generation of assay manifests for archiving and exporting of HCA metadata and data files to DCP
  
-This component listens for messages from the Ingest Core using RabbitMQ. When a submission is valid and complete (i.e. all data files have been uploaded to the upload area), Ingest Core will notify this component and this will generate files and bundles in the Data Store. 
+This component listens for messages from the Ingest Core using RabbitMQ. When a submission is valid and complete (i.e. all data files have been uploaded to the upload area), Ingest Core will notify this component and this will trigger the exporting or "assay" manifests generation. 
+
+## Message listeners
+
+### Terra Listener
+
+![Terra Listener](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/ebi-ait/ingest-exporter/dcp-692_update-readme/docs/exporting-to-terra.diag)
+
+### Assay Manifest Generator Listener
+
+This listener creates a "bundle" manifest entity in Ingest Core which contains all the metadata uuids related to an assay process. The bundle manifest entity was created for a different purpose before but was reused to aid in conversion of HCA entities to the EBI Archive entities.
+It's more appropriate to call it "Assay" Manifest instead for its role in archiver conversion.
+
+![Assay Manifest Generator Listener](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/ebi-ait/ingest-exporter/dcp-692_update-readme/docs/generating-assay-manifests.diag)
+
+## How to run locally
 
 ```
 pip install -r requirements.txt
@@ -17,7 +29,7 @@ pip install -r requirements.txt
 python exporter.py
 ```
 
-# testing
+## How to run tests
 ```
 pip install -r requirements-dev.txt
 ```
