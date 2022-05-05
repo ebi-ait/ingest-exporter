@@ -18,6 +18,7 @@ class MockEntityFiles:
         location = Path(self.base_path + entity_type + '/' + entity_id + '.json')
         if location.exists() and location.is_file():
             return self.load_json_file(location)
+        raise ValueError(f'cannot find entity {entity_id} of type {entity_type}')
 
     def get_related_entities(self, base_entity_uri: str, relation_uri: str) -> Iterator[dict]:
         base_type_id = base_entity_uri.replace(self.base_uri, '')
