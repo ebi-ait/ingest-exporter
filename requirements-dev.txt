@@ -1,3 +1,4 @@
+assertpy
 mock
 nose
 mypy

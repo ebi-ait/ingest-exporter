@@ -14,9 +14,9 @@
   "dcpVersion": "2018-04-09T15:16:47.672Z",
   "user": "anonymousUser",
   "lastModifiedUser": "anonymousUser",
-  "dataFileUuid": "uuid",
+  "dataFileUuid": "1ba0d3d6-b53b-40da-9378-a0f8eb288d41",
   "fileContentType": "content-type",
-  "size": "12345",
+  "size": 12345,
   "uuid": {
     "uuid": "c0523a60-cb45-43fd-8718-2eaff1dcdf30"
   },
@@ -31,9 +31,9 @@
   "fileName": "be53a909-2f0a-4b5c-ba67-c07f390f2f67_qc.bam",
   "cloudUrl": "s3://org-humancellatlas-upload-integration/a610450d-fcc7-49d3-a7f4-b6ed4022059b/be53a909-2f0a-4b5c-ba67-c07f390f2f67_qc.bam",
   "checksums": {
-    "sha256": "sha256",
-    "crc32c": "crc32c",
-    "sha1": "sha1",
+    "sha256": "abcdef01abcdef01abcdef01abcdef01abcdef01abcdef01abcdef01abcdef01",
+    "crc32c": "abcdef01",
+    "sha1": "abcdef01abcdef01abcdef01abcdef01abcdef01",
     "s3_etag": "s3_etag"
   },
   "validationId": null,

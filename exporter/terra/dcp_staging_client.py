@@ -1,18 +1,19 @@
-from ingest.api.ingestapi import IngestApi
-from exporter import utils
-from exporter.metadata import MetadataResource, DataFile, FileChecksums
-from exporter.graph.experiment_graph import LinkSet
-from exporter.schema import SchemaService
-from exporter.terra.gcs import GcsXferStorage, GcsStorage, Streamable, TransferJobSpec
+import json
+from dataclasses import dataclass
+from io import StringIO
 from typing import Iterable, Dict, Tuple, Callable
 
-from io import StringIO
-
+import requests
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
-import json
+from ingest.api.ingestapi import IngestApi
+from jsonschema.exceptions import ValidationError
+from jsonschema.validators import validate
 
-from dataclasses import dataclass
+from exporter.graph.experiment_graph import LinkSet
+from exporter.metadata import MetadataResource, DataFile, FileChecksums, MetadataParseException
+from exporter.schema import SchemaService
+from exporter.terra.gcs import GcsXferStorage, GcsStorage, Streamable, TransferJobSpec
 
 
 @dataclass
@@ -110,8 +111,15 @@ class DcpStagingClient:
         file_descriptor_dict = file_descriptor.to_dict()
         file_descriptor_dict["describedBy"] = latest_file_descriptor_schema.schema_url
         file_descriptor_dict["schema_version"] = latest_file_descriptor_schema.schema_version
-
+        file_description_schema = requests.get(file_descriptor_dict["describedBy"]).json()
+        self.validate_file_descriptor(file_description_schema, file_descriptor_dict)
         return file_descriptor_dict
+
+    def validate_file_descriptor(self, file_description_schema, file_descriptor_dict):
+        try:
+            validate(instance=file_descriptor_dict, schema=file_description_schema)
+        except ValidationError as e:
+            raise MetadataParseException(e)
 
     def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
         self.gcs_storage.write(object_key, data_stream)
