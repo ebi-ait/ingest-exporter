@@ -1,6 +1,5 @@
-.idea
-venv/
+.idea/
+.venv/
 _local/
 src/
 __pycache__
-venv*
