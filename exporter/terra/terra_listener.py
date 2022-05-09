@@ -69,6 +69,12 @@ class _TerraListener(ConsumerProducerMixin):
         return self.executor.submit(lambda: self._experiment_message_handler(body, msg))
 
     def _experiment_message_handler(self, body: str, msg: Message):
+        self.logger.info(f'Message received: {body}')
+
+        self.logger.info('Ack-ing message...')
+        msg.ack()
+        self.logger.info('Acked!')
+
         try:
             exp = ExperimentMessage.from_dict(json.loads(body))
             self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {exp.submission_uuid})')
@@ -85,8 +91,6 @@ class _TerraListener(ConsumerProducerMixin):
         except Exception as e:
             self.logger.error(f'Failed to export experiment message with body: {body}')
             self.logger.exception(e)
-
-        msg.ack()
 
     def log_complete_assay(self, job_id: str, assay_process_id: str):
         self.job_service.create_export_entity(job_id, assay_process_id)
