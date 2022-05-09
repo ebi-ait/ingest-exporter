@@ -81,11 +81,12 @@ class _TerraListener(ConsumerProducerMixin):
                 routing_key=self.publish_queue_config.routing_key,
                 retry=self.publish_queue_config.retry,
                 retry_policy=self.publish_queue_config.retry_policy)
-            msg.ack()
 
         except Exception as e:
             self.logger.error(f'Failed to export experiment message with body: {body}')
             self.logger.exception(e)
+
+        msg.ack()
 
     def log_complete_assay(self, job_id: str, assay_process_id: str):
         self.job_service.create_export_entity(job_id, assay_process_id)
