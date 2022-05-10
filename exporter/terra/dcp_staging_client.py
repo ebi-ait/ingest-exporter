@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass
 from io import StringIO
 from typing import Iterable, Dict, Tuple, Callable
@@ -61,6 +62,9 @@ class DcpStagingClient:
         self.gcs_xfer = gcs_xfer
         self.schema_service = schema_service
         self.ingest_client = ingest_client
+        format_log = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        logging.basicConfig(format=format_log)
+        self.logger = logging.getLogger(__name__)
 
     def transfer_data_files(self, submission: Dict, project_uuid, export_job_id: str) -> (TransferJobSpec, bool):
         upload_area = submission["stagingDetails"]["stagingAreaLocation"]["value"]
@@ -101,6 +105,8 @@ class DcpStagingClient:
     def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
         file_descriptor_json = self.generate_file_desciptor_json(file_metadata)
+        self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}, '
+                         f'projectUuid: {project_uuid}')
         data_stream = DcpStagingClient.dict_to_json_stream(file_descriptor_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
