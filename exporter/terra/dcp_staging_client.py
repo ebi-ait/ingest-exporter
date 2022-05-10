@@ -15,7 +15,9 @@ from exporter.graph.experiment_graph import LinkSet
 from exporter.metadata import MetadataResource, DataFile, FileChecksums, MetadataParseException
 from exporter.schema import SchemaService
 from exporter.terra.gcs import GcsXferStorage, GcsStorage, Streamable, TransferJobSpec
+from exporter.utils import log_function_and_params
 
+LOGGER_NAME = __name__
 
 @dataclass
 class FileDescriptor:
@@ -79,6 +81,7 @@ class DcpStagingClient:
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
 
+    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_metadata(self, metadata: MetadataResource, project_uuid: str):
 
         # TODO1: only proceed if lastContentModified > last
@@ -93,6 +96,7 @@ class DcpStagingClient:
         #patch_url = metadata.metadata_json['_links']['self']['href']
         #self.ingest_client.patch(patch_url, {"dcpVersion": metadata.dcp_version})
 
+        self.logger.info(f'Writing metadata for type: {metadata.metadata_type}')
         if metadata.metadata_type == "file":
             self.write_file_descriptor(metadata, project_uuid)
 
@@ -102,6 +106,7 @@ class DcpStagingClient:
         data_stream = DcpStagingClient.dict_to_json_stream(links_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
+    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
         file_descriptor_json = self.generate_file_desciptor_json(file_metadata)

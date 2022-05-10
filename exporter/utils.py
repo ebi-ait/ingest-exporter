@@ -25,3 +25,15 @@ def exec_time(logger: logging.Logger, level: int):
     return _exec_time
 
 
+def log_function_and_params(logger: logging.Logger, level: int = logging.INFO):
+    def _log_function_and_params(func):
+        def inner(*args, **kwargs):
+            func_args = inspect.signature(func).bind(*args, **kwargs).arguments
+            func_args.pop('self', None)
+            func_args_str = ", ".join(map("{0[0]} = {0[1]!r}".format, func_args.items()))
+            logger.log(level, f'{func.__name__} ( {func_args_str} )')
+            return func(*args, **kwargs)
+        return inner
+    return _log_function_and_params
+
+
