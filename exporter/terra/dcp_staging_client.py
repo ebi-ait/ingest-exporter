@@ -77,6 +77,7 @@ class DcpStagingClient:
     def wait_for_transfer_to_complete(self, job_name: str, compute_wait_time_sec:Callable, start_wait_time_sec: int, max_wait_time_sec: int):
         self.gcs_xfer.wait_for_job_to_complete(job_name, compute_wait_time_sec, start_wait_time_sec, max_wait_time_sec)
 
+    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_metadatas(self, metadatas: Iterable[MetadataResource], project_uuid: str):
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
