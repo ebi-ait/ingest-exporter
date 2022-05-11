@@ -28,6 +28,39 @@ pip install -r requirements.txt
 python exporter.py
 ```
 
+## How to run locally and hijack a given environment
+1. [Port forward rabbitMQ in environment of choice](https://github.com/ebi-ait/ingest-kube-deployment#accessing-rabbitmq-management-ui)
+1. Bring down deployment of ingest-exporter in environment of choice
+    - `kubectl delete deployment ingest-exporter`
+1. Get the GCP terra secret
+   ```
+   aws secretsmanager get-secret-value \
+    --profile=embl-ebi \
+    --region us-east-1 \
+    --secret-id ingest/dev/secrets \
+    --query SecretString \
+    --output text | jq -jr '.ingest_exporter_terra_svc_account' > ~/.secrets/terra_secret
+   ```
+1. Set up ENV vars:
+     ```
+      INGEST_API=https://api.ingest.<ENV>.archive.data.humancellatlas.org/;
+      RABBIT_URL=amqp://localhost:5672;
+      GCP_SVC_ACCOUNT_KEY_PATH=~/.secrets/terra_secret;
+      
+      # These can be retrieved from the exporter section of dev/staging/prod.yaml in
+      # https://github.com/ebi-ait/ingest-kube-deployment/blob/master/apps/
+      TERRA_BUCKET_NAME=<FILL IN>;
+      TERRA_BUCKET_PREFIX=<FILL IN>;
+      GCP_PROJECT=<FILL IN>>;
+   
+      # These can be retrieved from aws-secrets
+      # aws secretsmanager get-secret-value --secret-id ingest/<ENV>/secrets --profile=embl-ebi --query SecretString --output text | jq -jr '.ingest_exporter_access_key'
+      AWS_ACCESS_KEY_ID=<FILL IN>;
+      # aws secretsmanager get-secret-value --secret-id ingest/<ENV>/secrets --profile=embl-ebi --query SecretString --output text | jq -jr '.ingest_exporter_access_secret'
+      AWS_ACCESS_KEY_SECRET=<FILL IN>
+      ```
+1. Once you're finished, re-deploy exporter via GitLab
+
 ## How to run tests
 ```bash
 pip install -r requirements-dev.txt
