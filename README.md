@@ -59,6 +59,8 @@ python exporter.py
       # aws secretsmanager get-secret-value --secret-id ingest/<ENV>/secrets --profile=embl-ebi --query SecretString --output text | jq -jr '.ingest_exporter_access_secret'
       AWS_ACCESS_KEY_SECRET=<FILL IN>
       ```
+1. `pip install -r requirements.txt`
+1. `python exporter.py`
 1. Once you're finished, re-deploy exporter via GitLab
 
 ## How to run tests
