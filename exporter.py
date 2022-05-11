@@ -121,7 +121,13 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.WARNING,
                         format=format)
 
+    manifest_thread = None
     if not DISABLE_MANIFEST:
-        setup_manifest_receiver()
+        manifest_thread = setup_manifest_receiver()
 
-    setup_terra_exporter()
+    terra_thread = setup_terra_exporter()
+
+    if not DISABLE_MANIFEST:
+        manifest_thread.join()
+    terra_thread.join()
+
