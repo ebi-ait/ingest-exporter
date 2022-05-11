@@ -67,6 +67,7 @@ class DcpStagingClient:
         format_log = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         logging.basicConfig(format=format_log)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
 
     def transfer_data_files(self, submission: Dict, project_uuid, export_job_id: str) -> (TransferJobSpec, bool):
         upload_area = submission["stagingDetails"]["stagingAreaLocation"]["value"]
