@@ -1,19 +1,20 @@
-import googleapiclient.discovery
-from typing import IO, Dict, Any, Union, Optional, Callable
-from datetime import datetime
-import time
-
-import polling
-from google.cloud import storage
-from google.oauth2.service_account import Credentials
-from google.api_core.exceptions import PreconditionFailed, ServiceUnavailable
-from google.api_core import retry
 import json
 import logging
-from io import StringIO, BufferedReader
-
-from time import sleep
 from dataclasses import dataclass
+from datetime import datetime
+from io import StringIO, BufferedReader
+from time import sleep
+from typing import IO, Dict, Any, Union, Callable
+
+import google_auth_httplib2
+import googleapiclient.discovery
+import httplib2
+import polling
+from google.api_core import retry
+from google.api_core.exceptions import PreconditionFailed, ServiceUnavailable
+from google.auth.credentials import Credentials
+from google.cloud import storage
+from googleapiclient._auth import with_scopes
 from googleapiclient.errors import HttpError
 
 
@@ -137,7 +138,23 @@ class GcsXferStorage:
             raise Exception(f'Failed to parse transferOperations') from e
 
     def create_transfer_client(self):
-        return googleapiclient.discovery.build('storagetransfer', 'v1', credentials=self.credentials, cache_discovery=False)
+        # Since we are using threads, we must create a new HttpLib2 instance for every request
+        # See: https://googleapis.github.io/google-api-python-client/docs/thread_safety.html
+
+        # AuthorizedHttp requires credentials with scopes
+        # When using googleapiclient.discovery.build without requestBuilder and using credentials directly,
+        # the client adds the scopes for you automatically but not when using with requestBuilder and AuthorizedHttp
+        credentials_with_scope: Credentials = with_scopes(self.credentials,
+                                                          ['https://www.googleapis.com/auth/cloud-platform'])
+
+        def build_request(http, *args, **kwargs):
+            new_http = google_auth_httplib2.AuthorizedHttp(credentials_with_scope, http=httplib2.Http())
+            return googleapiclient.http.HttpRequest(new_http, *args, **kwargs)
+
+        authorized_http = google_auth_httplib2.AuthorizedHttp(credentials_with_scope, http=httplib2.Http())
+        return googleapiclient.discovery.build('storagetransfer', 'v1', requestBuilder=build_request,
+                                               http=authorized_http,
+                                               cache_discovery=False)
 
 
 class UploadPollingException(Exception):
