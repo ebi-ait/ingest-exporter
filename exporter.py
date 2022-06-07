@@ -111,12 +111,11 @@ def setup_terra_exporter() -> Thread:
 
 
 if __name__ == '__main__':
-    inegst_logger = logging.getLogger('ingest')
-    inegst_logger.setLevel(logging.INFO)
-    configure_logger(inegst_logger)
+    configure_logger(logging.getLogger(''))
+    ingest_logger = logging.getLogger('ingest')
+    ingest_logger.setLevel(logging.INFO)
     manifest_logger = logging.getLogger('manifest')
     manifest_logger.setLevel(logging.INFO)
-    configure_logger(manifest_logger)
 
     manifest_thread = None
     if not DISABLE_MANIFEST:

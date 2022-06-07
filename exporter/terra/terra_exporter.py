@@ -27,9 +27,6 @@ class TerraExporter:
 
         self.logger = logging.getLogger(LOGGER_NAME)
 
-        configure_logger(self.logger)
-        self.logger.setLevel(logging.INFO)
-
     @utils.exec_time(logging.getLogger(LOGGER_NAME), logging.INFO)
     def export(self, process_uuid, submission_uuid, export_job_id):
         with SessionContext(logger=self.logger,

@@ -11,12 +11,13 @@ see https://stackoverflow.com/questions/6618513/python-logging-with-context
 log_context_data = threading.local()
 
 
-def configure_logger(logger):
+def configure_logger(logger: logging.Logger):
     handler = logging.StreamHandler()
     format_log = LOG_FORMAT_WITH_CONTEXT
     handler.setFormatter(logging.Formatter(format_log))
     handler.addFilter(SessionContextFilter(attributes=['submission_uuid', 'export_job_id']))
     logger.addHandler(handler)
+    logger.info('logger configured')
 
 
 class SessionContextFilter(logging.Filter):
@@ -26,8 +27,12 @@ class SessionContextFilter(logging.Filter):
 
     def filter(self, record):
         for attribute in self.attributes:
-            setattr(record, attribute, getattr(log_context_data, attribute, 'n/a'))
+            setattr(record, attribute, get_session_value(attribute))
         return True
+
+
+def get_session_value(key: str):
+    return getattr(log_context_data, key, 'n/a')
 
 
 class SessionContext(object):

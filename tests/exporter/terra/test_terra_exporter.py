@@ -6,6 +6,7 @@ from ingest.api.ingestapi import IngestApi
 
 from exporter.graph.graph_crawler import GraphCrawler
 from exporter.metadata import MetadataService
+from exporter.session_context import configure_logger
 from exporter.terra.dcp_staging_client import DcpStagingClient
 from exporter.terra.terra_export_job import TerraExportJobService
 from exporter.terra.terra_exporter import TerraExporter
@@ -19,17 +20,13 @@ class TerraExporterTestCase(unittest.TestCase):
     @patch('exporter.graph.graph_crawler.GraphCrawler')
     @patch('exporter.metadata.MetadataService')
     @patch('ingest.api.ingestapi.IngestApi')
-    # patching the log handler to be able to verify the LogRecord has been modified to contain
-    # the submission_uuid.
-    # This is not the most elegant way to test this functionality.
-    @patch.object(logging.StreamHandler, 'emit', wraps=logging.StreamHandler.emit)
     def test_log_records_have_submission_uuid(self,
-                                     mock_log_handler,
                                      ingest_client: IngestApi,
                                      metadata_service: MetadataService,
                                      graph_crawler: GraphCrawler,
                                      dcp_staging_client: DcpStagingClient,
                                      job_service: TerraExportJobService):
+        configure_logger(logging.getLogger())
         exporter = TerraExporter(ingest_client,
                                  metadata_service,
                                  graph_crawler,
@@ -45,13 +42,7 @@ class TerraExporterTestCase(unittest.TestCase):
             exporter.export(process_uuid, submission_uuid, export_job_id)
         except:
             pass
-        self.verify_log_record(mock_log_handler, key='submission_uuid', value=submission_uuid)
-
-    def verify_log_record(self, mock_log_handler, key, value):
-        log_record = mock_log_handler.call_args.args[0]
-        self.assertIn(key, log_record.__dict__)
-        self.assertEquals(getattr(log_record, key), value)
-
+        self.fail('xxx')
 
 if __name__ == '__main__':
     unittest.main()

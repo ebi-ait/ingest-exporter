@@ -12,7 +12,6 @@ from manifest.generator import ManifestGenerator
 class ManifestExporter:
     def __init__(self, ingest_api: IngestApi, manifest_generator: ManifestGenerator):
         self.logger = logging.getLogger(__name__)
-        configure_logger(self.logger)
         self.ingest_api = ingest_api
         self.manifest_generator = manifest_generator
 
