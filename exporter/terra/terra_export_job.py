@@ -83,7 +83,7 @@ class TerraExportJobService:
             self.complete_job(job_id)
             self.logger.info('job complete')
         else:
-            self.logger('job not yet complete')
+            self.logger.info('job not yet complete')
 
     def complete_job(self, job_id: str):
         job_url = self.get_job_url(job_id)
