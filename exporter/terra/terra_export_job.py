@@ -81,7 +81,7 @@ class TerraExportJobService:
         self.logger.info(f'complete_entities_for_job: {complete_entities_for_job}')
         if export_job.num_expected_assays == complete_entities_for_job:
             self.complete_job(job_id)
-            self.logger('job complete')
+            self.logger.info('job complete')
         else:
             self.logger('job not yet complete')
 
