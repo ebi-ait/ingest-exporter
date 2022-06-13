@@ -8,6 +8,7 @@ from kombu.mixins import ConsumerProducerMixin
 from kombu import Connection, Consumer, Message, Queue, Exchange
 from typing import Type, List, Dict
 
+from exporter.session_context import SessionContext
 from exporter.terra.terra_exporter import TerraExporter
 from exporter.amqp import QueueConfig, AmqpConnConfig
 from exporter.terra.terra_export_job import TerraExportJobService
@@ -77,16 +78,27 @@ class _TerraListener(ConsumerProducerMixin):
 
         try:
             exp = ExperimentMessage.from_dict(json.loads(body))
-            self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {exp.submission_uuid})')
-            self.terra_exporter.export(exp.process_uuid, exp.submission_uuid, exp.job_id)
-            self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {exp.submission_uuid})')
-            self.log_complete_assay(exp.job_id, exp.process_id)
+            submission_uuid = exp.submission_uuid
+            export_job_id = exp.job_id
+            with SessionContext(logger=self.logger,
+                                context={
+                                    'submission_uuid': submission_uuid,
+                                    'export_job_id': export_job_id,
+                                }):
+                try:
+                    self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {submission_uuid})')
+                    self.terra_exporter.export(exp.process_uuid, submission_uuid, export_job_id)
+                    self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {submission_uuid})')
+                    self.log_complete_assay(export_job_id, exp.process_id)
 
-            self.producer.publish(json.loads(body),
-                exchange=self.publish_queue_config.exchange,
-                routing_key=self.publish_queue_config.routing_key,
-                retry=self.publish_queue_config.retry,
-                retry_policy=self.publish_queue_config.retry_policy)
+                    self.producer.publish(json.loads(body),
+                                          exchange=self.publish_queue_config.exchange,
+                                          routing_key=self.publish_queue_config.routing_key,
+                                          retry=self.publish_queue_config.retry,
+                                          retry_policy=self.publish_queue_config.retry_policy)
+                except Exception as e:
+                    self.logger.error(f'Failed to export experiment: {exp}')
+                    self.logger.exception(e)
 
         except Exception as e:
             self.logger.error(f'Failed to export experiment message with body: {body}')
