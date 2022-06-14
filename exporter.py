@@ -36,6 +36,8 @@ EXPERIMENT_ROUTING_KEY = 'ingest.exporter.experiment.submitted'
 ASSAY_COMPLETED_ROUTING_KEY = 'ingest.exporter.manifest.completed'
 EXPERIMENT_COMPLETED_ROUTING_KEY = 'ingest.exporter.experiment.exported'
 
+EXPERIMENT_ERRORED_QUEUE_NAME = 'ingest.terra.experiments.errored.queue'
+EXPERIMENT_ERRORED_ROUTING_KEY = 'ingest.exporter.experiment.errored'
 
 RETRY_POLICY = {
     'interval_start': 0,
@@ -101,8 +103,9 @@ def setup_terra_exporter() -> Thread:
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
     experiment_queue_config = QueueConfig(EXPERIMENT_QUEUE_TERRA, EXPERIMENT_ROUTING_KEY, EXCHANGE, EXCHANGE_TYPE, False, None)
     publish_queue_config = QueueConfig(None, EXPERIMENT_COMPLETED_ROUTING_KEY, EXCHANGE, EXCHANGE_TYPE, True, RETRY_POLICY)
+    error_queue_config = QueueConfig(EXPERIMENT_ERRORED_QUEUE_NAME, EXPERIMENT_ERRORED_ROUTING_KEY, EXCHANGE, EXCHANGE_TYPE, True, RETRY_POLICY)
 
-    terra_listener = TerraListener(amqp_conn_config, terra_exporter, terra_job_service, experiment_queue_config, publish_queue_config)
+    terra_listener = TerraListener(amqp_conn_config, terra_exporter, terra_job_service, experiment_queue_config, publish_queue_config, error_queue_config)
 
     terra_exporter_listener_process = Thread(target=lambda: terra_listener.run())
     terra_exporter_listener_process.start()

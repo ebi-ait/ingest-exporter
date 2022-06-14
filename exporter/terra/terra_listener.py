@@ -48,12 +48,14 @@ class _TerraListener(ConsumerProducerMixin):
                  job_service: TerraExportJobService,
                  experiment_queue_config: QueueConfig,
                  publish_queue_config: QueueConfig,
+                 error_queue_config: QueueConfig,
                  executor: ThreadPoolExecutor):
         self.connection = connection
         self.terra_exporter = terra_exporter
         self.job_service = job_service
         self.experiment_queue_config = experiment_queue_config
         self.publish_queue_config = publish_queue_config
+        self.error_queue_config = error_queue_config
         self.executor = executor
 
         self.logger = logging.getLogger(__name__)
@@ -76,8 +78,9 @@ class _TerraListener(ConsumerProducerMixin):
         msg.ack()
         self.logger.info('Acked!')
 
+        json_body = json.loads(body)
         try:
-            exp = ExperimentMessage.from_dict(json.loads(body))
+            exp = ExperimentMessage.from_dict(json_body)
             submission_uuid = exp.submission_uuid
             export_job_id = exp.job_id
             with SessionContext(logger=self.logger,
@@ -89,23 +92,36 @@ class _TerraListener(ConsumerProducerMixin):
                     self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {submission_uuid})')
                     self.terra_exporter.export(exp.process_uuid, submission_uuid, export_job_id)
                     self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {submission_uuid})')
-                    self.log_complete_assay(export_job_id, exp.process_id)
+                    self.log_complete_experiment(export_job_id, exp.process_id, json_body)
 
-                    self.producer.publish(json.loads(body),
-                                          exchange=self.publish_queue_config.exchange,
-                                          routing_key=self.publish_queue_config.routing_key,
-                                          retry=self.publish_queue_config.retry,
-                                          retry_policy=self.publish_queue_config.retry_policy)
                 except Exception as e:
                     self.logger.error(f'Failed to export experiment: {exp}')
                     self.logger.exception(e)
+                    self.log_failed_experiment(json_body)
 
         except Exception as e:
             self.logger.error(f'Failed to export experiment message with body: {body}')
             self.logger.exception(e)
+            self.log_failed_experiment(json_body)
 
-    def log_complete_assay(self, job_id: str, assay_process_id: str):
+    def log_complete_experiment(self, job_id: str, assay_process_id: str, body: json):
         self.job_service.create_export_entity(job_id, assay_process_id)
+        self.producer.publish(
+            body,
+            exchange=self.publish_queue_config.exchange,
+            routing_key=self.publish_queue_config.routing_key,
+            retry=self.publish_queue_config.retry,
+            retry_policy=self.publish_queue_config.retry_policy
+        )
+
+    def log_failed_experiment(self, body: json):
+        self.producer.publish(
+            body,
+            exchange=self.error_queue_config.exchange,
+            routing_key=self.error_queue_config.routing_key,
+            retry=self.error_queue_config.retry,
+            retry_policy=self.error_queue_config.retry_policy
+        )
 
     @staticmethod
     def queue_from_config(queue_config: QueueConfig) -> Queue:
@@ -120,14 +136,16 @@ class TerraListener:
                  terra_exporter: TerraExporter,
                  job_service: TerraExportJobService,
                  experiment_queue_config: QueueConfig,
-                 publish_queue_config: QueueConfig):
+                 publish_queue_config: QueueConfig,
+                 error_queue_config: QueueConfig):
         self.amqp_conn_config = amqp_conn_config
         self.terra_exporter = terra_exporter
         self.job_service = job_service
         self.experiment_queue_config = experiment_queue_config
         self.publish_queue_config = publish_queue_config
+        self.error_queue_config = error_queue_config
 
     def run(self):
         with Connection(self.amqp_conn_config.broker_url()) as conn:
-            _terra_listener = _TerraListener(conn, self.terra_exporter, self.job_service, self.experiment_queue_config, self.publish_queue_config, ThreadPoolExecutor())
+            _terra_listener = _TerraListener(conn, self.terra_exporter, self.job_service, self.experiment_queue_config, self.publish_queue_config, self.error_queue_config, ThreadPoolExecutor())
             _terra_listener.run()
