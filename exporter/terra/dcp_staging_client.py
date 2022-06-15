@@ -111,41 +111,39 @@ class DcpStagingClient:
     @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
-        file_descriptor_json = self.generate_file_desciptor_json(file_metadata)
+        file_descriptor_json = self.generate_file_descriptor_json(file_metadata)
         self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}, '
                          f'projectUuid: {project_uuid}')
         data_stream = DcpStagingClient.dict_to_json_stream(file_descriptor_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
-    def generate_file_desciptor_json(self, file_metadata) -> Dict:
-        latest_file_descriptor_schema = self.schema_service.cached_latest_file_descriptor_schema()
+    def generate_file_descriptor_json(self, file_metadata) -> Dict:
         file_descriptor = FileDescriptor.from_file_metadata(file_metadata)
 
-        file_descriptor_dict = file_descriptor.to_dict()
-        file_descriptor_dict["describedBy"] = latest_file_descriptor_schema.schema_url
-        file_descriptor_dict["schema_version"] = latest_file_descriptor_schema.schema_version
-        file_description_schema = requests.get(file_descriptor_dict["describedBy"]).json()
-        self.validate_file_descriptor(file_description_schema, file_descriptor_dict)
-        return file_descriptor_dict
+        json_doc = file_descriptor.to_dict()
+        latest_schema = self.schema_service.cached_latest_file_descriptor_schema()
+        self.update_schema_info_and_validate(json_doc, latest_schema)
+        return json_doc
 
-    def validate_file_descriptor(self, file_description_schema, file_descriptor_dict):
+    @staticmethod
+    def update_schema_info_and_validate(json_doc, json_schema):
+        json_doc["describedBy"] = json_schema.schema_url
+        json_doc["schema_version"] = json_schema.schema_version
+        json_schema = requests.get(json_doc["describedBy"]).json()
         try:
-            validate(instance=file_descriptor_dict, schema=file_description_schema)
+            validate(instance=json_doc, schema=json_schema)
         except ValidationError as e:
-            raise MetadataParseException(e)
+            raise MetadataParseException(f'problem validating document {json_doc} with schema: {json_doc["describedBy"]}', e)
 
     def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
         self.gcs_storage.write(object_key, data_stream)
 
     def generate_links_json(self, link_set: LinkSet) -> Dict:
-        latest_links_schema = self.schema_service.cached_latest_links_schema()
-
-        links_json = link_set.to_dict()
-        links_json["describedBy"] = latest_links_schema.schema_url
-        links_json["schema_version"] = latest_links_schema.schema_version
-        links_json["schema_type"] = "links"
-
-        return links_json
+        json_doc = link_set.to_dict()
+        json_doc["schema_type"] = "links"
+        latest_schema = self.schema_service.cached_latest_links_schema()
+        self.update_schema_info_and_validate(json_doc, latest_schema)
+        return json_doc
 
     @staticmethod
     def dict_to_json_stream(d: Dict) -> StringIO:
