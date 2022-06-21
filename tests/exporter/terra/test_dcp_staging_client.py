@@ -1,7 +1,6 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from assertpy import assert_that
 from ingest.api.ingestapi import IngestApi
 
 from exporter.graph.graph_crawler import GraphCrawler
@@ -52,9 +51,8 @@ class AbstractFileGenerationBaseTests:
 
     def test_when__invalid_document__fail(self):
         file_generation_input = self.create_invalid_document()
-        assert_that(self.file_generation_function) \
-            .raises(MetadataParseException) \
-            .when_called_with(file_generation_input)
+        with self.assertRaises(MetadataParseException):
+            self.file_generation_function(file_generation_input)
 
     def test_when__valid_document__pass(self):
         file_metadata = self.create_valid_file()

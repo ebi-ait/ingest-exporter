@@ -20,11 +20,6 @@ class ManifestReceiver(Receiver):
 
     def on_message(self, body, message):
         self.logger.info(f'Message received: {body}')
-
-        self.logger.info('Ack-ing message...')
-        message.ack()
-        self.logger.info('Acked!')
-
         success = False
         start = time.perf_counter()
         body_dict = json.loads(body)
@@ -36,15 +31,17 @@ class ManifestReceiver(Receiver):
                 body_dict["total"]))
 
             self.exporter.export(process_uuid=body_dict["documentUuid"], submission_uuid=body_dict["envelopeUuid"])
-
             success = True
-        except Exception as e1:
-            self.logger.exception(str(e1))
-            self.logger.error(f"Failed to process the exporter message: {body} due to error: {str(e1)}")
+        except Exception as e:
+            self.logger.error(f"Rejecting export manifest message: {body} due to error: {str(e)}")
+            message.reject(requeue=False)
+            self.logger.exception(str(e))
 
         if success:
             self.logger.info(f"Notifying state tracker of completed manifest: {body}")
             self.notify_state_tracker(body_dict)
+            self.logger.info(f'Acknowledging export manifest message: {body}')
+            message.ack()
             end = time.perf_counter()
             time_to_export = end - start
             self.logger.info('Finished! ' + str(message.delivery_tag))

@@ -70,7 +70,7 @@ class TestReceiver(TestCase):
         bundle_version = version_timestamp.strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         message = MagicMock(name='message')
-        message.ack = MagicMock()
+        message.reject = MagicMock()
         create_receiver = ManifestReceiver(MagicMock(), MagicMock(),
                                                mock_exporter,
                                                self.publish_config)
@@ -84,5 +84,5 @@ class TestReceiver(TestCase):
 
         # then
         mock_exporter.export.assert_called_with(submission_uuid='submission-uuid', process_uuid='doc-uuid')
-        message.ack.assert_called_once()
+        message.reject.assert_called_once_with(requeue=False)
         create_receiver.notify_state_tracker.assert_not_called()
