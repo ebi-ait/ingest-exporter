@@ -1,25 +1,23 @@
 #!/usr/bin/env python
 import logging
 import os
-import sys
 from threading import Thread
 
 from ingest.api.ingestapi import IngestApi
-from exporter.metadata import MetadataService
-from exporter.graph.graph_crawler import GraphCrawler
-from exporter.terra.dcp_staging_client import DcpStagingClient
-from exporter.schema import SchemaService
-from exporter.terra.terra_listener import TerraListener
-from exporter.terra.terra_export_job import TerraExportJobService
-from exporter.amqp import AmqpConnConfig, QueueConfig
-
 from kombu import Connection, Exchange, Queue
 
-from manifest.exporter import ManifestExporter
-from manifest.receiver import ManifestReceiver
-from manifest.generator import ManifestGenerator
-
+from exporter.amqp import AmqpConnConfig, QueueConfig
+from exporter.graph.graph_crawler import GraphCrawler
+from exporter.metadata import MetadataService
+from exporter.schema import SchemaService
+from exporter.session_context import configure_logger
+from exporter.terra.dcp_staging_client import DcpStagingClient
+from exporter.terra.terra_export_job import TerraExportJobService
 from exporter.terra.terra_exporter import TerraExporter
+from exporter.terra.terra_listener import TerraListener
+from manifest.exporter import ManifestExporter
+from manifest.generator import ManifestGenerator
+from manifest.receiver import ManifestReceiver
 
 DISABLE_MANIFEST = os.environ.get('DISABLE_MANIFEST', False)
 
@@ -113,13 +111,11 @@ def setup_terra_exporter() -> Thread:
 
 
 if __name__ == '__main__':
-    logging.getLogger('ingest').setLevel(logging.INFO)
-    logging.getLogger('manifest').setLevel(logging.INFO)
-
-    format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
-             '%(lineno)s %(funcName)s(): %(message)s'
-    logging.basicConfig(stream=sys.stdout, level=logging.WARNING,
-                        format=format)
+    configure_logger(logging.getLogger(''))
+    ingest_logger = logging.getLogger('ingest')
+    ingest_logger.setLevel(logging.INFO)
+    manifest_logger = logging.getLogger('manifest')
+    manifest_logger.setLevel(logging.INFO)
 
     manifest_thread = None
     if not DISABLE_MANIFEST:

@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 
@@ -8,12 +7,13 @@ from kombu.mixins import ConsumerProducerMixin
 from kombu import Connection, Consumer, Message, Queue, Exchange
 from typing import Type, List, Dict
 
+from exporter.session_context import SessionContext
 from exporter.terra.terra_exporter import TerraExporter
 from exporter.amqp import QueueConfig, AmqpConnConfig
 from exporter.terra.terra_export_job import TerraExportJobService
 
 
-class ExperimentMessageParseExpection(Exception):
+class ExperimentMessageParseException(Exception):
     pass
 
 
@@ -36,7 +36,21 @@ class ExperimentMessage:
                                      data["total"],
                                      data["exportJobId"])
         except (KeyError, TypeError) as e:
-            raise ExperimentMessageParseExpection(e)
+            raise ExperimentMessageParseException(e)
+
+    @staticmethod
+    def as_dict(exp: 'ExperimentMessage') -> Dict:
+        try:
+            return {
+                "documentId": exp.process_id,
+                "documentUuid": exp.process_uuid,
+                "envelopeUuid": exp.submission_uuid,
+                "index": exp.experiment_index,
+                "total": exp.total,
+                "exportJobId": exp.job_id
+            }
+        except (KeyError, TypeError) as e:
+            raise ExperimentMessageParseException(e)
 
 
 class _TerraListener(ConsumerProducerMixin):
@@ -70,30 +84,43 @@ class _TerraListener(ConsumerProducerMixin):
 
     def _experiment_message_handler(self, body: str, msg: Message):
         self.logger.info(f'Message received: {body}')
-
-        self.logger.info('Ack-ing message...')
-        msg.ack()
-        self.logger.info('Acked!')
-
         try:
             exp = ExperimentMessage.from_dict(json.loads(body))
-            self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {exp.submission_uuid})')
-            self.terra_exporter.export(exp.process_uuid, exp.submission_uuid, exp.job_id)
-            self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {exp.submission_uuid})')
-            self.log_complete_assay(exp.job_id, exp.process_id)
-
-            self.producer.publish(json.loads(body),
-                exchange=self.publish_queue_config.exchange,
-                routing_key=self.publish_queue_config.routing_key,
-                retry=self.publish_queue_config.retry,
-                retry_policy=self.publish_queue_config.retry_policy)
+            submission_uuid = exp.submission_uuid
+            export_job_id = exp.job_id
+            with SessionContext(logger=self.logger,
+                                context={
+                                    'submission_uuid': submission_uuid,
+                                    'export_job_id': export_job_id,
+                                }):
+                try:
+                    self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {submission_uuid})')
+                    self.terra_exporter.export(exp.process_uuid, submission_uuid, export_job_id)
+                    self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {submission_uuid})')
+                    self.log_complete_experiment(msg, exp)
+                except Exception as e:
+                    self.logger.error(f'Rejecting export experiment: {exp} due to error: {str(e)}')
+                    msg.reject(requeue=False)
+                    self.logger.exception(e)
 
         except Exception as e:
-            self.logger.error(f'Failed to export experiment message with body: {body}')
+            self.logger.error(f"Rejecting export experiment message: {body} due to error: {str(e)}")
+            msg.reject(requeue=False)
             self.logger.exception(e)
 
-    def log_complete_assay(self, job_id: str, assay_process_id: str):
-        self.job_service.create_export_entity(job_id, assay_process_id)
+    def log_complete_experiment(self, msg: Message, experiment: ExperimentMessage):
+        self.logger.info(f'Marking successful experiment job_id {experiment.job_id} and process_id {experiment.process_id}')
+        self.job_service.create_export_entity(experiment.job_id, experiment.process_id)
+        self.logger.info(f'Creating new message in publish queue for experiment: {experiment}')
+        self.producer.publish(
+            ExperimentMessage.as_dict(experiment),
+            exchange=self.publish_queue_config.exchange,
+            routing_key=self.publish_queue_config.routing_key,
+            retry=self.publish_queue_config.retry,
+            retry_policy=self.publish_queue_config.retry_policy
+        )
+        self.logger.info(f'Acknowledging export experiment message: {experiment}')
+        msg.ack()
 
     @staticmethod
     def queue_from_config(queue_config: QueueConfig) -> Queue:

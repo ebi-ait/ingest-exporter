@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import List, Dict, Callable
 from ingest.api.ingestapi import IngestApi
@@ -64,6 +65,7 @@ class TerraExportJob:
 class TerraExportJobService:
     def __init__(self, ingest_client: IngestApi):
         self.ingest_client = ingest_client
+        self.logger = logging.getLogger(__name__)
 
     def create_export_entity(self, job_id: str, assay_process_id: str):
         assay_export_entity = TerraExportEntity(assay_process_id, [])
@@ -74,8 +76,14 @@ class TerraExportJobService:
 
     def _maybe_complete_job(self, job_id):
         export_job = self.get_job(job_id)
-        if export_job.num_expected_assays == self.get_num_complete_entities_for_job(job_id):
+        self.logger.info(f'export_job.num_expected_assays: {export_job.num_expected_assays}')
+        complete_entities_for_job = self.get_num_complete_entities_for_job(job_id)
+        self.logger.info(f'complete_entities_for_job: {complete_entities_for_job}')
+        if export_job.num_expected_assays == complete_entities_for_job:
             self.complete_job(job_id)
+            self.logger.info('job complete')
+        else:
+            self.logger.info('job not yet complete')
 
     def complete_job(self, job_id: str):
         job_url = self.get_job_url(job_id)
