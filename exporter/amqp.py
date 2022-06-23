@@ -1,14 +1,30 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from kombu import Queue, Exchange, Producer
 
 
 @dataclass
 class QueueConfig:
-    name: str
-    routing_key: str
     exchange: str
-    exchange_type: str
-    retry: bool
-    retry_policy: dict
+    routing_key: str
+    name: str = field(default=None)
+    exchange_type: str = field(default='topic')
+    retry: bool = field(default=False)
+    retry_policy: dict = field(default_factory=dict)
+    queue_arguments: dict = field(default_factory=dict)
+
+    def queue_from_config(self) -> Queue:
+        exchange = Exchange(self.exchange, self.exchange_type)
+        return Queue(self.name, exchange, self.routing_key, queue_arguments=self.queue_arguments)
+
+    def send_message(self, producer: Producer, body: dict):
+        producer.publish(
+            body,
+            exchange=self.exchange,
+            routing_key=self.routing_key,
+            retry=self.retry,
+            retry_policy=self.retry_policy
+        )
 
 
 @dataclass

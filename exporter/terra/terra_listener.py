@@ -65,15 +65,15 @@ class _TerraListener(ConsumerProducerMixin):
         self.connection = connection
         self.terra_exporter = terra_exporter
         self.job_service = job_service
-        self.experiment_queue_config = experiment_queue_config
-        self.publish_queue_config = publish_queue_config
+        self.experiment_queue = experiment_queue_config
+        self.publish_queue = publish_queue_config
         self.executor = executor
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
     def get_consumers(self, _consumer: Type[Consumer], channel) -> List[Consumer]:
-        experiment_consumer = _consumer([_TerraListener.queue_from_config(self.experiment_queue_config)],
+        experiment_consumer = _consumer([self.experiment_queue.queue_from_config()],
                                         callbacks=[self.experiment_message_handler],
                                         prefetch_count=1)
 
@@ -112,20 +112,9 @@ class _TerraListener(ConsumerProducerMixin):
         self.logger.info(f'Marking successful experiment job_id {experiment.job_id} and process_id {experiment.process_id}')
         self.job_service.create_export_entity(experiment.job_id, experiment.process_id)
         self.logger.info(f'Creating new message in publish queue for experiment: {experiment}')
-        self.producer.publish(
-            ExperimentMessage.as_dict(experiment),
-            exchange=self.publish_queue_config.exchange,
-            routing_key=self.publish_queue_config.routing_key,
-            retry=self.publish_queue_config.retry,
-            retry_policy=self.publish_queue_config.retry_policy
-        )
+        self.publish_queue.send_message(self.producer, ExperimentMessage.as_dict(experiment))
         self.logger.info(f'Acknowledging export experiment message: {experiment}')
         msg.ack()
-
-    @staticmethod
-    def queue_from_config(queue_config: QueueConfig) -> Queue:
-        exchange = Exchange(queue_config.exchange, queue_config.exchange_type)
-        return Queue(queue_config.name, exchange, queue_config.routing_key)
 
 
 class TerraListener:

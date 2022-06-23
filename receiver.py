@@ -6,7 +6,7 @@ from typing import Type
 class Worker(ConsumerProducerMixin):
     def __init__(self, connection, queues):
         self.connection = connection
-        self.queues = queues
+        self.queues = [q.queue_from_config() for q in queues]
 
     def get_consumers(self, consumer: Type[Consumer], channel):
         return [consumer(queues=self.queues,
@@ -14,10 +14,4 @@ class Worker(ConsumerProducerMixin):
 
 
 class Receiver(Worker):
-    def notify_state_tracker(self, body_dict):
-        self.producer.publish(body_dict, exchange=self.publish_config.get('exchange'),
-                              routing_key=self.publish_config.get('routing_key'),
-                              retry=self.publish_config.get('retry', True),
-                              retry_policy=self.publish_config.get('retry_policy'))
-        self.logger.info("Notified!")
-
+    pass

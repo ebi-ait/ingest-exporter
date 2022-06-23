@@ -25,17 +25,6 @@ DEFAULT_RABBIT_URL = os.path.expandvars(
     os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
 
 EXCHANGE = 'ingest.exporter.exchange'
-EXCHANGE_TYPE = 'topic'
-
-ASSAY_QUEUE_MANIFEST = 'ingest.manifests.assays.new'
-EXPERIMENT_QUEUE_TERRA = 'ingest.terra.experiments.new'
-
-ASSAY_ROUTING_KEY = 'ingest.exporter.manifest.submitted'
-EXPERIMENT_ROUTING_KEY = 'ingest.exporter.experiment.submitted'
-
-ASSAY_COMPLETED_ROUTING_KEY = 'ingest.exporter.manifest.completed'
-EXPERIMENT_COMPLETED_ROUTING_KEY = 'ingest.exporter.experiment.exported'
-
 
 RETRY_POLICY = {
     'interval_start': 0,
@@ -43,28 +32,45 @@ RETRY_POLICY = {
     'interval_max': 30,
     'max_retries': 60
 }
+ASSAY_QUEUE_CONFIG = QueueConfig(
+    EXCHANGE,
+    'ingest.exporter.manifest.submitted',
+    name='ingest.manifests.assays.new',
+    queue_arguments={
+        'x-dead-letter-exchange': 'ingest.exporter.exchange',
+        'x-dead-letter-routing-key': 'ingest.manifest.assay.error'
+    }
+)
+ASSAY_COMPLETE_CONFIG = QueueConfig(
+    EXCHANGE,
+    'ingest.exporter.manifest.completed',
+    retry=True,
+    retry_policy=RETRY_POLICY
+)
+EXPERIMENT_QUEUE_CONFIG = QueueConfig(
+    EXCHANGE,
+    'ingest.exporter.experiment.submitted',
+    name='ingest.terra.experiments.new',
+    queue_arguments={
+        'x-dead-letter-exchange': 'ingest.exporter.exchange',
+        'x-dead-letter-routing-key': 'ingest.terra.experiment.error'
+    }
+)
+EXPERIMENT_COMPLETE_CONFIG = QueueConfig(
+    EXCHANGE,
+    'ingest.exporter.experiment.exported',
+    retry=True,
+    retry_policy=RETRY_POLICY
+)
 
 
 def setup_manifest_receiver() -> Thread:
     ingest_client = IngestApi()
 
     with Connection(DEFAULT_RABBIT_URL) as conn:
-        bundle_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
-        bundle_queues = [
-            Queue(ASSAY_QUEUE_MANIFEST, bundle_exchange,
-                  routing_key=ASSAY_ROUTING_KEY)
-        ]
-
-        conf = {
-            'exchange': EXCHANGE,
-            'routing_key': ASSAY_COMPLETED_ROUTING_KEY,
-            'retry': True,
-            'retry_policy': RETRY_POLICY
-        }
-
         manifest_generator = ManifestGenerator(ingest_client, GraphCrawler(MetadataService(ingest_client)))
         exporter = ManifestExporter(ingest_api=ingest_client, manifest_generator=manifest_generator)
-        manifest_receiver = ManifestReceiver(conn, bundle_queues, exporter=exporter, publish_config=conf)
+        manifest_receiver = ManifestReceiver(conn, [ASSAY_QUEUE_CONFIG], exporter=exporter, publish_config=ASSAY_COMPLETE_CONFIG)
         manifest_process = Thread(target=manifest_receiver.run)
         manifest_process.start()
 
@@ -99,10 +105,8 @@ def setup_terra_exporter() -> Thread:
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
-    experiment_queue_config = QueueConfig(EXPERIMENT_QUEUE_TERRA, EXPERIMENT_ROUTING_KEY, EXCHANGE, EXCHANGE_TYPE, False, None)
-    publish_queue_config = QueueConfig(None, EXPERIMENT_COMPLETED_ROUTING_KEY, EXCHANGE, EXCHANGE_TYPE, True, RETRY_POLICY)
 
-    terra_listener = TerraListener(amqp_conn_config, terra_exporter, terra_job_service, experiment_queue_config, publish_queue_config)
+    terra_listener = TerraListener(amqp_conn_config, terra_exporter, terra_job_service, EXPERIMENT_QUEUE_CONFIG, EXPERIMENT_COMPLETE_CONFIG)
 
     terra_exporter_listener_process = Thread(target=lambda: terra_listener.run())
     terra_exporter_listener_process.start()

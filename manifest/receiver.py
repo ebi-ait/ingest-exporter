@@ -2,12 +2,15 @@ import json
 import logging
 import time
 
+from typing import List
+
+from exporter.amqp import QueueConfig
 from manifest.exporter import ManifestExporter
 from receiver import Receiver
 
 
 class ManifestReceiver(Receiver):
-    def __init__(self, connection, queues, exporter: ManifestExporter, publish_config):
+    def __init__(self, connection, queues: List[QueueConfig], exporter: ManifestExporter, publish_config: QueueConfig):
         self.connection = connection
         self.queues = queues
         self.logger = logging.getLogger(f'{__name__}.ManifestReceiver')
@@ -17,6 +20,10 @@ class ManifestReceiver(Receiver):
     def run(self):
         self.logger.info("Running ManifestReceiver")
         super(ManifestReceiver, self).run()
+
+    def notify_state_tracker(self, body_dict):
+        self.publish_config.send_message(self.producer, body_dict)
+        self.logger.info("Notified!")
 
     def on_message(self, body, message):
         self.logger.info(f'Message received: {body}')
