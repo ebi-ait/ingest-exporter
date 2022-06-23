@@ -23,7 +23,7 @@ class TerraMessageHandlerTest(TestCase):
             terra_exporter=self.exporter_mock,
             job_service=self.job_service_mock,
             experiment_queue_config=MagicMock(spec=QueueConfig),
-            publish_queue_config=QueueConfig('name', 'routing_key', 'exchange','topic', False, {}),
+            publish_queue_config=QueueConfig('exchange', 'routing_key'),
             executor=MagicMock(spec=ThreadPoolExecutor)
         )
         self.exporter_mock.export = MagicMock()
