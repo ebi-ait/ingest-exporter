@@ -6,7 +6,7 @@ from typing import Type
 class Worker(ConsumerProducerMixin):
     def __init__(self, connection, queues):
         self.connection = connection
-        self.queues = [q.queue_from_config() for q in queues]
+        self.queues = queues
 
     def get_consumers(self, consumer: Type[Consumer], channel):
         return [consumer(queues=self.queues,
