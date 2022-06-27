@@ -34,7 +34,7 @@ RETRY_POLICY = {
 }
 ASSAY_QUEUE_CONFIG = QueueConfig(
     EXCHANGE,
-    'ingest.exporter.manifest.submitted',
+    routing_key='ingest.exporter.manifest.submitted',
     name='ingest.manifests.assays.new',
     queue_arguments={
         'x-dead-letter-exchange': 'ingest.exporter.exchange',
@@ -43,13 +43,13 @@ ASSAY_QUEUE_CONFIG = QueueConfig(
 )
 ASSAY_COMPLETE_CONFIG = QueueConfig(
     EXCHANGE,
-    'ingest.exporter.manifest.completed',
+    routing_key='ingest.exporter.manifest.completed',
     retry=True,
     retry_policy=RETRY_POLICY
 )
 EXPERIMENT_QUEUE_CONFIG = QueueConfig(
     EXCHANGE,
-    'ingest.exporter.experiment.submitted',
+    routing_key='ingest.exporter.experiment.submitted',
     name='ingest.terra.experiments.new',
     queue_arguments={
         'x-dead-letter-exchange': 'ingest.exporter.exchange',
@@ -58,7 +58,7 @@ EXPERIMENT_QUEUE_CONFIG = QueueConfig(
 )
 EXPERIMENT_COMPLETE_CONFIG = QueueConfig(
     EXCHANGE,
-    'ingest.exporter.experiment.exported',
+    routing_key='ingest.exporter.experiment.exported',
     retry=True,
     retry_policy=RETRY_POLICY
 )
