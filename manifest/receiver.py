@@ -12,7 +12,7 @@ from receiver import Receiver
 class ManifestReceiver(Receiver):
     def __init__(self, connection, queues: List[QueueConfig], exporter: ManifestExporter, publish_config: QueueConfig):
         self.connection = connection
-        self.queues = queues
+        self.queues = [q.queue_from_config() for q in queues]
         self.logger = logging.getLogger(f'{__name__}.ManifestReceiver')
         self.publish_config = publish_config
         self.exporter = exporter
