@@ -1,13 +1,13 @@
 from unittest import TestCase
 
-from ingest.api.ingestapi import IngestApi
-from exporter.graph.graph_crawler import GraphCrawler
-from exporter.metadata import MetadataService
+from hca_ingest.api.ingestapi import IngestApi
 from mock import MagicMock
 
+from exporter.graph.graph_crawler import GraphCrawler
+from exporter.metadata import MetadataService
 from manifest.generator import ManifestGenerator
-from tests.mocks.ingest import MockIngestAPI
 from tests.mocks.files import MockEntityFiles
+from tests.mocks.ingest import MockIngestAPI
 
 
 class TestGenerator(TestCase):

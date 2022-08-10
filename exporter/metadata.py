@@ -1,10 +1,10 @@
 import re
 from copy import deepcopy
-from packaging import version
-from typing import List, Dict, Optional
 from dataclasses import dataclass
+from typing import List, Dict
 
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
+from packaging import version
 
 from exporter import utils
 

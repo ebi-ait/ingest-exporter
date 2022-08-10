@@ -1,6 +1,6 @@
 import logging
 
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
 
 from exporter import utils
 from exporter.graph.graph_crawler import GraphCrawler

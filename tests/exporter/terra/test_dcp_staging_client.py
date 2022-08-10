@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.graph.graph_crawler import GraphCrawler
 from exporter.metadata import MetadataResource, MetadataParseException, MetadataService
