@@ -1,0 +1,9 @@
+
+requests
+kombu
+jsonschema
+google-cloud-storage
+cachetools
+google-api-python-client
+polling
+packaging
