@@ -1,20 +1,22 @@
+import uuid
+from dataclasses import asdict
 from unittest import TestCase
-
-from mock import Mock
+from unittest.mock import patch, MagicMock, Mock
 
 from exporter import utils
-from exporter.metadata import MetadataResource, MetadataService, MetadataParseException, DataFile, FileChecksums
+from exporter.metadata import MetadataResource, MetadataService, MetadataParseException, DataFile, \
+    FileChecksums, MetadataProvenance
 
 
 class MetadataResourceTest(TestCase):
     def test_provenance_from_dict(self):
         # given:
-        uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
+        uuid_value = str(uuid.uuid4())
         data = self._create_test_data(uuid_value)
         data['content']['describedBy'] = 'https://some-schema/1.2.3'
 
         # when:
-        metadata_provenance = MetadataResource.provenance_from_dict(data)
+        metadata_provenance = MetadataProvenance.from_dict(data)
 
         # then:
         self.assertIsNotNone(metadata_provenance)
@@ -26,26 +28,26 @@ class MetadataResourceTest(TestCase):
 
     def test_provenance_from_dict_older_version(self):
         # given:
-        uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
+        uuid_value = str(uuid.uuid4())
         data = self._create_test_data(uuid_value)
         data['content']['describedBy'] = 'https://13.1.1/cell_suspension'
 
         # when:
-        metadata_provenance = MetadataResource.provenance_from_dict(data)
+        metadata_provenance = MetadataProvenance.from_dict(data)
 
         # then:
         self.assertIsNotNone(metadata_provenance)
-        self.assertIsNone(metadata_provenance.to_dict().get('schema_major_version'))
-        self.assertIsNone(metadata_provenance.to_dict().get('schema_minor_version'))
+        self.assertIsNone(asdict(metadata_provenance).get('schema_major_version'))
+        self.assertIsNone(asdict(metadata_provenance).get('schema_minor_version'))
 
     def test_provenance_from_dict_newer_version(self):
         # given:
-        uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
+        uuid_value = str(uuid.uuid4())
         data = self._create_test_data(uuid_value)
         data['content']['describedBy'] = 'https://15.1.1/cell_suspension'
 
         # when:
-        metadata_provenance = MetadataResource.provenance_from_dict(data)
+        metadata_provenance = MetadataProvenance.from_dict(data)
 
         # then:
         self.assertEqual(15, metadata_provenance.schema_major_version)
@@ -53,7 +55,7 @@ class MetadataResourceTest(TestCase):
 
     def test_provenance_from_dict_fail_fast(self):
         # given:
-        uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
+        uuid_value = str(uuid.uuid4())
         data = {'uuid': uuid_value,  # unexpected structure structure
                 'submissionDate': 'a submission date',
                 'updateDate': 'an update date'}
@@ -61,11 +63,11 @@ class MetadataResourceTest(TestCase):
         # then:
         with self.assertRaises(MetadataParseException):
             # when
-            MetadataResource.provenance_from_dict(data)
+            MetadataProvenance.from_dict(data)
 
     def test_from_dict(self):
         # given:
-        uuid_value = '3f3212da-d5d0-4e55-b31d-83243fa02e0d'
+        uuid_value = str(uuid.uuid4())
         data = self._create_test_data(uuid_value)
 
         # when:
@@ -83,10 +85,45 @@ class MetadataResourceTest(TestCase):
     def test_from_dict_fail_fast_with_missing_info(self):
         # given:
         data = {}
+
         # then:
         with self.assertRaises(MetadataParseException):
             # when
             MetadataResource.from_dict(data)
+
+    def test_string_output_for_logging(self):
+        # given
+        data = self._create_test_data(str(uuid.uuid4()))
+        meta = MetadataResource.from_dict(data)
+
+        # when
+        meta_str = meta.__repr__()
+
+        # then
+        self.assertFalse(meta_str.startswith('<exporter.metadata.MetadataResource'))
+
+    def test_full_resource_not_included_on_repr(self):
+        # given
+        data = self._create_test_data(str(uuid.uuid4()))
+        meta = MetadataResource.from_dict(data)
+        self.assertDictEqual(meta.metadata_json, meta.full_resource.get('content'))
+        # when
+        meta_str = meta.__repr__()
+        # then
+        self.assertRaises(ValueError, lambda: meta_str.index('full_resource'))
+
+    @patch('exporter.utils.to_dcp_version')
+    def test_dcp_version_is_updated_on_init(self, to_dcp: MagicMock):
+        # given
+        to_dcp.return_value = 'IamADateTimeString'
+        data = self._create_test_data(str(uuid.uuid4()))
+
+        # when
+        meta = MetadataResource.from_dict(data)
+
+        # then
+        to_dcp.assert_called_with(data.get('dcpVersion'))
+        self.assertEqual(meta.dcp_version, to_dcp.return_value)
 
     @staticmethod
     def _create_test_data(uuid_value):
@@ -100,13 +137,12 @@ class MetadataResourceTest(TestCase):
 
 
 class MetadataServiceTest(TestCase):
-
     def test_fetch_resource(self):
         # given:
         ingest_client = Mock(name='ingest_client')
-        uuid = '301636f7-f97b-4379-bf77-c5dcd9f17bcb'
+        uuid_value = str(uuid.uuid4())
         raw_metadata = {'type': 'Biomaterial',
-                        'uuid': {'uuid': uuid},
+                        'uuid': {'uuid': uuid_value},
                         'content': {'describedBy': "http://some-schema/1.2.3",
                                     'some': {'content': ['we', 'are', 'agnostic', 'of']}},
                         'dcpVersion': '2019-12-02T13:40:50.520Z',
@@ -124,7 +160,7 @@ class MetadataServiceTest(TestCase):
 
         # then:
         self.assertEqual('biomaterial', metadata_resource.metadata_type)
-        self.assertEqual(uuid, metadata_resource.uuid)
+        self.assertEqual(uuid_value, metadata_resource.uuid)
         self.assertEqual(raw_metadata['content'], metadata_resource.metadata_json)
         self.assertEqual(utils.to_dcp_version(raw_metadata['dcpVersion']), metadata_resource.dcp_version)
         self.assertEqual(raw_metadata['submissionDate'], metadata_resource.provenance.submission_date)
@@ -132,8 +168,8 @@ class MetadataServiceTest(TestCase):
 
 
 class DataFileTest(TestCase):
-
-    def mock_checksums(self) -> FileChecksums:
+    @staticmethod
+    def mock_checksums() -> FileChecksums:
         return FileChecksums("sha256", "crc32c", "sha1", "s3_etag")
 
     def test_parse_bucket_from_cloud_url(self):
