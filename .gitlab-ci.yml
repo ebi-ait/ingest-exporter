@@ -2,10 +2,12 @@ include:
   remote: 'https://raw.githubusercontent.com/ebi-ait/gitlab-ci-templates/master/build-release-deploy.yml'
 
 Unit Test:
-  image: quay.io/ebi-ait/ingest-base-images:python_3.6-slim
+  image: quay.io/ebi-ait/ingest-base-images:python_3.7.13-slim
+  before_script:
+    - python -m venv ./venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip install pip-tools
+    - pip-sync requirements.txt dev-requirements.txt
   script:
-    - apt-get update
-    - apt-get install -y git
-    - pip install -r requirements.txt
-    - pip install -r requirements-dev.txt
-    - nosetests
+    - python -m unittest

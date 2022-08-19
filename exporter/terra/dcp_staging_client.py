@@ -7,7 +7,7 @@ from typing import Iterable, Dict, Tuple, Callable
 import requests
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 

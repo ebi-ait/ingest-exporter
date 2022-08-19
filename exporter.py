@@ -3,8 +3,8 @@ import logging
 import os
 from threading import Thread
 
-from ingest.api.ingestapi import IngestApi
-from kombu import Connection, Exchange, Queue
+from hca_ingest.api.ingestapi import IngestApi
+from kombu import Connection
 
 from exporter.amqp import AmqpConnConfig, QueueConfig
 from exporter.graph.graph_crawler import GraphCrawler

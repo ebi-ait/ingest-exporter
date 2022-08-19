@@ -1,4 +1,4 @@
-FROM quay.io/ebi-ait/ingest-base-images:python_3.7-alpine
+FROM quay.io/ebi-ait/ingest-base-images:python_3.7.13-alpine
 
 RUN apk update && \
     apk add build-base && \
@@ -9,8 +9,12 @@ RUN apk update && \
 RUN mkdir /app
 WORKDIR /app
 
+RUN python -m venv venv
+RUN source venv/bin/activate
+RUN pip install --upgrade pip
+RUN pip install pip-tools
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip-sync requirements.txt
 
 COPY exporter.py receiver.py ./
 COPY ./exporter ./exporter

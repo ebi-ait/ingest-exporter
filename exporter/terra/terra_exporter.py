@@ -1,6 +1,6 @@
 import logging
 
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
 
 from exporter import utils
 from exporter.graph.graph_crawler import GraphCrawler
@@ -23,8 +23,8 @@ class TerraExporter:
         self.graph_crawler = graph_crawler
         self.dcp_staging_client = dcp_staging_client
         self.job_service = job_service
-
         self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger.setLevel(logging.INFO)
 
     @utils.exec_time(logging.getLogger(LOGGER_NAME), logging.INFO)
     def export(self, process_uuid, submission_uuid, export_job_id):

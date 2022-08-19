@@ -1,12 +1,12 @@
+import json
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Callable
-from ingest.api.ingestapi import IngestApi
-import requests
-import json
-
 from enum import Enum
+from typing import List, Dict, Callable
+
 import polling
+import requests
+from hca_ingest.api.ingestapi import IngestApi
 
 
 @dataclass

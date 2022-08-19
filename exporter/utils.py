@@ -1,13 +1,16 @@
 import inspect
 import logging
 from datetime import datetime
-from ingest.utils.date import parse_date_string
+
+from hca_ingest.utils.date import parse_date_string
 
 DCP_VERSION_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
 
 def to_dcp_version(date_str: str):
     date = parse_date_string(date_str)
     return date.strftime(DCP_VERSION_FORMAT)
+
 
 def exec_time(logger: logging.Logger, level: int):
     def _exec_time(func):
@@ -35,5 +38,3 @@ def log_function_and_params(logger: logging.Logger, level: int = logging.INFO):
             return func(*args, **kwargs)
         return inner
     return _log_function_and_params
-
-

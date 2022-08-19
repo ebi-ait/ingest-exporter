@@ -3,9 +3,9 @@ import argparse
 import logging
 import sys
 
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
 
-from exporter.session_context import configure_logger, SessionContext
+from exporter.session_context import SessionContext
 from manifest.generator import ManifestGenerator
 
 

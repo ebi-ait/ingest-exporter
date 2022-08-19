@@ -1,10 +1,9 @@
 import re
-from copy import deepcopy
-from packaging import version
-from typing import List, Dict, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field, asdict
+from typing import List, Dict
 
-from ingest.api.ingestapi import IngestApi
+from hca_ingest.api.ingestapi import IngestApi
+from packaging import version
 
 from exporter import utils
 
@@ -51,56 +50,16 @@ class MetadataException(Exception):
     pass
 
 
+@dataclass
 class MetadataProvenance:
-    def __init__(self, document_id: str, submission_date: str, update_date: str,
-                 schema_major_version: int = None, schema_minor_version: int = None):
-        self.document_id = document_id
-        self.submission_date = submission_date
-        self.update_date = update_date
-
-        if schema_major_version:
-            self.schema_major_version = schema_major_version
-
-        if schema_minor_version:
-            self.schema_minor_version = schema_minor_version
-
-    def to_dict(self):
-        return deepcopy(self.__dict__)
-
-
-class MetadataResource:
-
-    def __init__(self, metadata_type, metadata_json, uuid, dcp_version,
-                 provenance: MetadataProvenance, full_resource: dict):
-        self.metadata_json = metadata_json
-        self.uuid = uuid
-        self.dcp_version = utils.to_dcp_version(dcp_version)
-        self.metadata_type = metadata_type  # TODO: use an enum type instead of string
-        self.provenance = provenance
-        self.full_resource = full_resource
-
-    def get_content(self, with_provenance=False) -> Dict:
-        content = deepcopy(self.full_resource["content"])
-        if with_provenance:
-            content["provenance"] = self.provenance.to_dict()
-            return content
-        else:
-            return content
+    document_id: str
+    submission_date: str
+    update_date: str
+    schema_major_version: int = field(default=None)
+    schema_minor_version: int = field(default=None)
 
     @staticmethod
     def from_dict(data: dict):
-        try:
-            metadata_json = data['content']
-            uuid = data['uuid']['uuid']
-            dcp_version = data['dcpVersion']
-            metadata_type = data['type'].lower()
-            provenance = MetadataResource.provenance_from_dict(data)
-            return MetadataResource(metadata_type, metadata_json, uuid, dcp_version, provenance, full_resource=data)
-        except (KeyError, TypeError) as e:
-            raise MetadataParseException(e)
-
-    @staticmethod
-    def provenance_from_dict(data: dict):
         try:
             uuid = data['uuid']['uuid']
             submission_date = data['submissionDate']
@@ -110,7 +69,7 @@ class MetadataResource:
             schema_semver = re.findall(r'\d+\.\d+\.\d+', data["content"]["describedBy"])[0]
             concrete_type = data['content']['describedBy'].rsplit('/', 1)[-1]
             version_with_schema_fields = SCHEMA_VERSIONS_WITHOUT_SCHEMA_FIELDS.get(concrete_type)
-            if MetadataResource.version_has_schema_fields(schema_semver, version_with_schema_fields):
+            if MetadataProvenance.version_has_schema_fields(schema_semver, version_with_schema_fields):
                 schema_major_version, schema_minor_version = [int(x) for x in schema_semver.split(".")][:2]
                 return MetadataProvenance(uuid, submission_date, update_date, schema_major_version,
                                           schema_minor_version)
@@ -124,8 +83,39 @@ class MetadataResource:
         return not version_with_schema_fields or version.parse(schema_semver) >= version.parse(
             version_with_schema_fields)
 
+
+@dataclass
+class MetadataResource:
+    metadata_type: str
+    metadata_json: str
+    uuid: str
+    dcp_version: str
+    provenance: MetadataProvenance
+    full_resource: dict = field(repr=False)
+
+    def __post_init__(self):
+        self.dcp_version = utils.to_dcp_version(self.dcp_version)
+
+    def get_content(self, with_provenance=False) -> Dict:
+        content = asdict(self).get('full_resource').get('content')
+        if with_provenance:
+            content["provenance"] = asdict(self.provenance)
+        return content
+
+    @staticmethod
+    def from_dict(data: dict):
+        try:
+            metadata_json = data['content']
+            uuid = data['uuid']['uuid']
+            dcp_version = data['dcpVersion']
+            metadata_type = data['type'].lower()
+            provenance = MetadataProvenance.from_dict(data)
+            return MetadataResource(metadata_type, metadata_json, uuid, dcp_version, provenance, data)
+        except (KeyError, TypeError) as e:
+            raise MetadataParseException(e)
+
     def concrete_type(self) -> str:
-        return self.metadata_json["describedBy"].rsplit('/', 1)[-1]
+        return self.metadata_json.get("describedBy").rsplit('/', 1)[-1]
 
 
 class MetadataService:
@@ -226,4 +216,4 @@ class DataFile:
                 raise MetadataParseException(e)
         else:
             raise MetadataParseException(f'Error: parsing DataFile from file MetadataResources requires non-empty'
-                                         f'"full_resource" field. Metadata:\n\n {file_metadata.metadata_json}')
+                                         f'"full_resource" field. Metadata:\n\n {file_metadata}')

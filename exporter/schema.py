@@ -1,7 +1,7 @@
-from ingest.api.ingestapi import IngestApi
-from typing import Optional, Callable
+from typing import Optional
 
 from cachetools.func import ttl_cache
+from hca_ingest.api.ingestapi import IngestApi
 
 
 class SchemaParseException(Exception):

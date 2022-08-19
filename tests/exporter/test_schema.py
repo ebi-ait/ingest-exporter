@@ -1,11 +1,10 @@
+from time import sleep
 from unittest import TestCase
 
+from hca_ingest.api.ingestapi import IngestApi
 from mock import Mock, MagicMock
 
 from exporter.schema import SchemaService
-from ingest.api.ingestapi import IngestApi
-
-from time import sleep
 
 
 class SchemaServiceTest(TestCase):
