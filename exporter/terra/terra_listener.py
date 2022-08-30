@@ -1,20 +1,17 @@
 import json
 import logging
-
-from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
-from kombu.mixins import ConsumerProducerMixin
-from kombu import Connection, Consumer, Message, Queue, Exchange
+from dataclasses import dataclass
 from typing import Type, List, Dict
 
-from exporter.session_context import SessionContext
-from exporter.terra.terra_exporter import TerraExporter
+from kombu import Connection, Consumer, Message
+from kombu.mixins import ConsumerProducerMixin
+
 from exporter.amqp import QueueConfig, AmqpConnConfig
+from exporter.session_context import SessionContext
+from exporter.terra.exceptions import ExperimentMessageParseException
 from exporter.terra.terra_export_job import TerraExportJobService
-
-
-class ExperimentMessageParseException(Exception):
-    pass
+from exporter.terra.terra_exporter import TerraExporter
 
 
 @dataclass

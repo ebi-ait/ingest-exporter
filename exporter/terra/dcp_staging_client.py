@@ -21,10 +21,6 @@ from exporter.utils import log_function_and_params
 LOGGER_NAME = __name__
 
 
-class DcpStagingException(Exception):
-    pass
-
-
 class DcpStagingClient:
 
     def __init__(self, gcs_storage: GcsStorage, gcs_xfer: GcsXferStorage, schema_service: SchemaService, ingest_client: IngestApi):

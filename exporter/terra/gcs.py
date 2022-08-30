@@ -17,6 +17,8 @@ from google.cloud import storage
 from googleapiclient._auth import with_scopes
 from googleapiclient.errors import HttpError
 
+from exporter.terra.exceptions import UploadPollingException
+
 
 @dataclass
 class TransferJobSpec:
@@ -155,10 +157,6 @@ class GcsXferStorage:
         return googleapiclient.discovery.build('storagetransfer', 'v1', requestBuilder=build_request,
                                                http=authorized_http,
                                                cache_discovery=False)
-
-
-class UploadPollingException(Exception):
-    pass
 
 
 Streamable = Union[BufferedReader, StringIO, IO[Any]]
