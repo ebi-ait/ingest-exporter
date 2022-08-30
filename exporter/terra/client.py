@@ -22,8 +22,7 @@ from exporter.utils import log_function_and_params
 LOGGER_NAME = __name__
 
 
-class DcpStagingClient:
-
+class TerraClient:
     def __init__(self, gcs_storage: GcsStorage, gcs_xfer: GcsTransfer, schema_service: SchemaService, ingest_client: IngestApi):
         self.gcs_storage = gcs_storage
         self.gcs_xfer = gcs_xfer
@@ -56,7 +55,7 @@ class DcpStagingClient:
         dest_object_key = f'{project_uuid}/metadata/{metadata.concrete_type()}/{metadata.uuid}_{metadata.dcp_version}.json'
 
         metadata_json = metadata.get_content(with_provenance=True)
-        data_stream = DcpStagingClient.dict_to_json_stream(metadata_json)
+        data_stream = TerraClient.dict_to_json_stream(metadata_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
         # TODO2: patch dcpVersion        
@@ -70,7 +69,7 @@ class DcpStagingClient:
     def write_links(self, link_set: LinkSet, process_uuid: str, process_version: str, project_uuid: str):
         dest_object_key = f'{project_uuid}/links/{process_uuid}_{process_version}_{project_uuid}.json'
         links_json = self.generate_links_json(link_set)
-        data_stream = DcpStagingClient.dict_to_json_stream(links_json)
+        data_stream = TerraClient.dict_to_json_stream(links_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
     @log_function_and_params(logging.getLogger(LOGGER_NAME))
@@ -79,7 +78,7 @@ class DcpStagingClient:
         file_descriptor_json = self.generate_file_descriptor_json(file_metadata)
         self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}, '
                          f'projectUuid: {project_uuid}')
-        data_stream = DcpStagingClient.dict_to_json_stream(file_descriptor_json)
+        data_stream = TerraClient.dict_to_json_stream(file_descriptor_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
     def generate_file_descriptor_json(self, file_metadata) -> Dict:
@@ -128,7 +127,7 @@ class DcpStagingClient:
             self.gcs_xfer = None
 
         def with_gcs_info(self, service_account_credentials_path: str, gcp_project: str, bucket_name: str,
-                          bucket_prefix: str) -> 'DcpStagingClient.Builder':
+                          bucket_prefix: str) -> 'TerraClient.Builder':
             with open(service_account_credentials_path) as source:
                 info = json.load(source)
                 storage_credentials: Credentials = Credentials.from_service_account_info(info)
@@ -145,15 +144,15 @@ class DcpStagingClient:
 
                 return self
 
-        def with_ingest_client(self, ingest_client: IngestApi) -> 'DcpStagingClient.Builder':
+        def with_ingest_client(self, ingest_client: IngestApi) -> 'TerraClient.Builder':
             self.ingest_client = ingest_client
             return self
 
-        def with_schema_service(self, schema_service: SchemaService) -> 'DcpStagingClient.Builder':
+        def with_schema_service(self, schema_service: SchemaService) -> 'TerraClient.Builder':
             self.schema_service = schema_service
             return self
 
-        def build(self) -> 'DcpStagingClient':
+        def build(self) -> 'TerraClient':
             if not self.gcs_xfer:
                 raise Exception("gcs_xfer must be set")
             elif not self.gcs_storage:
@@ -163,9 +162,9 @@ class DcpStagingClient:
             elif not self.ingest_client:
                 raise Exception("ingest_client must be set")
             else:
-                return DcpStagingClient(self.gcs_storage, self.gcs_xfer, self.schema_service, self.ingest_client)
+                return TerraClient(self.gcs_storage, self.gcs_xfer, self.schema_service, self.ingest_client)
 
     def write_staging_area_json(self, project_uuid: str):
         dest_object_key = f'{project_uuid}/staging_area.json'
-        data_stream = DcpStagingClient.dict_to_json_stream({'is_delta': False})
+        data_stream = TerraClient.dict_to_json_stream({'is_delta': False})
         self.write_to_staging_bucket(dest_object_key, data_stream)

@@ -11,7 +11,7 @@ from exporter.graph.graph_crawler import GraphCrawler
 from exporter.metadata.service import MetadataService
 from exporter.schema import SchemaService
 from exporter.session_context import configure_logger
-from exporter.terra.dcp_staging_client import DcpStagingClient
+from exporter.terra.client import TerraClient
 from exporter.terra.terra_export_job import TerraExportJobService
 from exporter.terra.terra_exporter import TerraExporter
 from exporter.terra.terra_listener import TerraListener
@@ -91,7 +91,7 @@ def setup_terra_exporter() -> Thread:
     metadata_service = MetadataService(ingest_client)
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
-    dcp_staging_client = (DcpStagingClient
+    dcp_staging_client = (TerraClient
                           .Builder()
                           .with_ingest_client(ingest_client)
                           .with_schema_service(schema_service)

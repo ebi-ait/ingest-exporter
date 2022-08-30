@@ -6,7 +6,7 @@ from exporter import utils
 from exporter.graph.graph_crawler import GraphCrawler
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
-from exporter.terra.dcp_staging_client import DcpStagingClient
+from exporter.terra.client import TerraClient
 from exporter.terra.terra_export_job import TerraExportJobService
 
 LOGGER_NAME = __name__
@@ -17,7 +17,7 @@ class TerraExporter:
                  ingest_client: IngestApi,
                  metadata_service: MetadataService,
                  graph_crawler: GraphCrawler,
-                 dcp_staging_client: DcpStagingClient,
+                 dcp_staging_client: TerraClient,
                  job_service: TerraExportJobService):
         self.ingest_client = ingest_client
         self.metadata_service = metadata_service
