@@ -9,7 +9,7 @@ from exporter.metadata.datafile import DataFile
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.provenance import MetadataProvenance
 from exporter.metadata.resource import MetadataResource
-from exporter.scratch import MetadataService
+from exporter.metadata.service import MetadataService
 
 
 class MetadataResourceTest(TestCase):
