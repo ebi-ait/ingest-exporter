@@ -8,11 +8,11 @@ from kombu import Connection
 
 from exporter.amqp import AmqpConnConfig, QueueConfig
 from exporter.graph.graph_crawler import GraphCrawler
+from exporter.ingest.service import IngestService
 from exporter.metadata.service import MetadataService
 from exporter.schema import SchemaService
 from exporter.session_context import configure_logger
 from exporter.terra.client import TerraClient
-from exporter.terra.terra_export_job import TerraExportJobService
 from exporter.terra.terra_exporter import TerraExporter
 from exporter.terra.terra_listener import TerraListener
 from manifest.exporter import ManifestExporter
@@ -99,7 +99,7 @@ def setup_terra_exporter() -> Thread:
                           .with_gcs_xfer(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix, aws_access_key_id, aws_access_key_secret)
                           .build())
 
-    terra_job_service = TerraExportJobService(ingest_client)
+    terra_job_service = IngestService(ingest_client)
     terra_exporter = TerraExporter(ingest_client, metadata_service, graph_crawler, dcp_staging_client, terra_job_service)
 
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')

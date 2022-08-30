@@ -1,12 +1,13 @@
+from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
 
-from concurrent.futures import ThreadPoolExecutor
 from kombu import Connection, Message
 from mock import MagicMock
 
 from exporter.amqp import QueueConfig
+from exporter.ingest.service import IngestService
+from exporter.terra.terra_exporter import TerraExporter
 from exporter.terra.terra_listener import _TerraListener
-from exporter.terra.terra_exporter import TerraExporter, TerraExportJobService
 
 
 class TerraMessageHandlerTest(TestCase):
@@ -17,7 +18,7 @@ class TerraMessageHandlerTest(TestCase):
             'retry_policy': {}
         }
         self.exporter_mock = MagicMock(spec=TerraExporter)
-        self.job_service_mock = MagicMock(spec=TerraExportJobService)
+        self.job_service_mock = MagicMock(spec=IngestService)
         self.listener = _TerraListener(
             connection=MagicMock(spec=Connection),
             terra_exporter=self.exporter_mock,

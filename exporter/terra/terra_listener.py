@@ -8,9 +8,9 @@ from kombu import Connection, Consumer, Message
 from kombu.mixins import ConsumerProducerMixin
 
 from exporter.amqp import QueueConfig, AmqpConnConfig
+from exporter.ingest.service import IngestService
 from exporter.session_context import SessionContext
 from exporter.terra.exceptions import ExperimentMessageParseException
-from exporter.terra.terra_export_job import TerraExportJobService
 from exporter.terra.terra_exporter import TerraExporter
 
 
@@ -55,7 +55,7 @@ class _TerraListener(ConsumerProducerMixin):
     def __init__(self,
                  connection: Connection,
                  terra_exporter: TerraExporter,
-                 job_service: TerraExportJobService,
+                 job_service: IngestService,
                  experiment_queue_config: QueueConfig,
                  publish_queue_config: QueueConfig,
                  executor: ThreadPoolExecutor):
@@ -119,7 +119,7 @@ class TerraListener:
     def __init__(self,
                  amqp_conn_config: AmqpConnConfig,
                  terra_exporter: TerraExporter,
-                 job_service: TerraExportJobService,
+                 job_service: IngestService,
                  experiment_queue_config: QueueConfig,
                  publish_queue_config: QueueConfig):
         self.amqp_conn_config = amqp_conn_config
