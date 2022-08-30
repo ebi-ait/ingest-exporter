@@ -6,7 +6,8 @@ from typing import List, Iterable, Optional, Callable
 
 from exporter.graph.experiment_graph import ExperimentGraph, ProcessLink, Input, Output, \
     ProtocolLink, SupplementaryFileLink, SupplementedEntity, SupplementaryFile
-from exporter.scratch import MetadataResource, MetadataService
+from exporter.metadata.resource import MetadataResource
+from exporter.scratch import MetadataService
 
 
 @dataclass

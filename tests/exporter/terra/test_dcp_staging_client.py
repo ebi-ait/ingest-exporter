@@ -5,8 +5,9 @@ from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.graph.graph_crawler import GraphCrawler
 from exporter.metadata.exceptions import MetadataParseException
+from exporter.metadata.resource import MetadataResource
 from exporter.schema import SchemaService
-from exporter.scratch import MetadataResource, MetadataService
+from exporter.scratch import MetadataService
 from exporter.terra.dcp_staging_client import DcpStagingClient
 from tests.mocks.files import MockEntityFiles
 

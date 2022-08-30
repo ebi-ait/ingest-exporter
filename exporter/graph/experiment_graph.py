@@ -2,7 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Set, Dict, Iterable, Any, Union
 
-from exporter.scratch import MetadataResource
+from exporter.metadata.resource import MetadataResource
 
 
 @dataclass

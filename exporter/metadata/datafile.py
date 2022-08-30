@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from exporter.metadata.checksums import FileChecksums
 from exporter.metadata.exceptions import MetadataParseException
-from exporter.scratch import MetadataResource
+from exporter.metadata.resource import MetadataResource
 
 
 @dataclass
