@@ -15,7 +15,8 @@ from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.schema import SchemaService
-from exporter.terra.gcs import GcsXferStorage, GcsStorage, Streamable, TransferJobSpec
+from exporter.terra.gcs.storage import Streamable, GcsStorage
+from exporter.terra.gcs.transfer import TransferJobSpec, GcsTransfer
 from exporter.utils import log_function_and_params
 
 LOGGER_NAME = __name__
@@ -23,7 +24,7 @@ LOGGER_NAME = __name__
 
 class DcpStagingClient:
 
-    def __init__(self, gcs_storage: GcsStorage, gcs_xfer: GcsXferStorage, schema_service: SchemaService, ingest_client: IngestApi):
+    def __init__(self, gcs_storage: GcsStorage, gcs_xfer: GcsTransfer, schema_service: SchemaService, ingest_client: IngestApi):
         self.gcs_storage = gcs_storage
         self.gcs_xfer = gcs_xfer
         self.schema_service = schema_service
@@ -140,7 +141,7 @@ class DcpStagingClient:
             with open(service_account_credentials_path) as source:
                 info = json.load(source)
                 credentials: Credentials = Credentials.from_service_account_info(info)
-                self.gcs_xfer = GcsXferStorage(aws_access_key_id, aws_access_key_secret, gcp_project, bucket_name, bucket_prefix, credentials)
+                self.gcs_xfer = GcsTransfer(aws_access_key_id, aws_access_key_secret, gcp_project, bucket_name, bucket_prefix, credentials)
 
                 return self
 
