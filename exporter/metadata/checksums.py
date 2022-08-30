@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from exporter.scratch import MetadataParseException
+from exporter.metadata.exceptions import MetadataParseException
 
 
 @dataclass

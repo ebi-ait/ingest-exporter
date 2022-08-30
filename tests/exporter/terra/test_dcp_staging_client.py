@@ -4,8 +4,9 @@ from unittest.mock import MagicMock, Mock
 from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.graph.graph_crawler import GraphCrawler
+from exporter.metadata.exceptions import MetadataParseException
 from exporter.schema import SchemaService
-from exporter.scratch import MetadataResource, MetadataParseException, MetadataService
+from exporter.scratch import MetadataResource, MetadataService
 from exporter.terra.dcp_staging_client import DcpStagingClient
 from tests.mocks.files import MockEntityFiles
 

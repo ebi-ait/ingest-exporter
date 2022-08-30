@@ -6,6 +6,7 @@ from hca_ingest.api.ingestapi import IngestApi
 from packaging import version
 
 from exporter import utils
+from exporter.metadata.exceptions import MetadataParseException
 
 # These are the versions which started using https://schema.humancellatlas.org/system/1.1.0/provenance
 # which introduced the schema_major_version and schema_minor_version
@@ -40,14 +41,6 @@ SCHEMA_VERSIONS_WITHOUT_SCHEMA_FIELDS = {
     'imaging_protocol': '11.2.0',
     'specimen_from_organism': '10.3.0'
 }
-
-
-class MetadataParseException(Exception):
-    pass
-
-
-class MetadataException(Exception):
-    pass
 
 
 @dataclass

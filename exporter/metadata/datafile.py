@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
 from exporter.metadata.checksums import FileChecksums
-from exporter.scratch import MetadataResource, MetadataParseException
+from exporter.metadata.exceptions import MetadataParseException
+from exporter.scratch import MetadataResource
 
 
 @dataclass
