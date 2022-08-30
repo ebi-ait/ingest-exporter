@@ -4,9 +4,10 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
 from exporter import utils
+from exporter.metadata.checksums import FileChecksums
 from exporter.metadata.datafile import DataFile
 from exporter.scratch import MetadataResource, MetadataService, MetadataParseException, \
-    FileChecksums, MetadataProvenance
+    MetadataProvenance
 
 
 class MetadataResourceTest(TestCase):
