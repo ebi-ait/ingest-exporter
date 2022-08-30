@@ -4,7 +4,7 @@ from hca_ingest.api.ingestapi import IngestApi
 
 from exporter import utils
 from exporter.graph.graph_crawler import GraphCrawler
-from exporter.metadata import MetadataResource, MetadataService
+from exporter.scratch import MetadataResource, MetadataService
 from exporter.terra.dcp_staging_client import DcpStagingClient
 from exporter.terra.terra_export_job import TerraExportJobService
 

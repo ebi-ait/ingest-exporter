@@ -1,11 +1,12 @@
-from exporter.metadata import MetadataResource, MetadataService
-from exporter.graph.experiment_graph import ExperimentGraph, ProcessLink, Input, Output, ProtocolLink, SupplementaryFileLink, SupplementedEntity, SupplementaryFile
-from typing import List, Iterable, Optional, Callable
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from functools import reduce
 from operator import iconcat
-from dataclasses import dataclass
+from typing import List, Iterable, Optional, Callable
 
-from concurrent.futures import ThreadPoolExecutor
+from exporter.graph.experiment_graph import ExperimentGraph, ProcessLink, Input, Output, \
+    ProtocolLink, SupplementaryFileLink, SupplementedEntity, SupplementaryFile
+from exporter.scratch import MetadataResource, MetadataService
 
 
 @dataclass

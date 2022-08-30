@@ -12,8 +12,8 @@ from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
 from exporter.graph.experiment_graph import LinkSet
-from exporter.metadata import MetadataResource, DataFile, FileChecksums, MetadataParseException
 from exporter.schema import SchemaService
+from exporter.scratch import MetadataResource, DataFile, FileChecksums, MetadataParseException
 from exporter.terra.gcs import GcsXferStorage, GcsStorage, Streamable, TransferJobSpec
 from exporter.utils import log_function_and_params
 

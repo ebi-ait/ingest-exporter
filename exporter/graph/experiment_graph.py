@@ -1,8 +1,8 @@
-from exporter.metadata import MetadataResource
-
 from copy import deepcopy
-from typing import List, Set, Dict, Iterable, Any, Union
 from dataclasses import dataclass
+from typing import List, Set, Dict, Iterable, Any, Union
+
+from exporter.scratch import MetadataResource
 
 
 @dataclass

@@ -4,7 +4,7 @@ from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.graph.experiment_graph import ExperimentGraph
 from exporter.graph.graph_crawler import GraphCrawler
-from exporter.metadata import MetadataResource, DataFile
+from exporter.scratch import MetadataResource, DataFile
 from manifest.manifests import AssayManifest
 
 

@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
 from exporter import utils
-from exporter.metadata import MetadataResource, MetadataService, MetadataParseException, DataFile, \
+from exporter.scratch import MetadataResource, MetadataService, MetadataParseException, DataFile, \
     FileChecksums, MetadataProvenance
 
 

@@ -4,7 +4,7 @@ from hca_ingest.api.ingestapi import IngestApi
 from mock import MagicMock
 
 from exporter.graph.graph_crawler import GraphCrawler
-from exporter.metadata import MetadataResource, MetadataService
+from exporter.scratch import MetadataResource, MetadataService
 from tests.mocks.files import MockEntityFiles
 from tests.mocks.ingest import MockIngestAPI
 
