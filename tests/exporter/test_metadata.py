@@ -7,7 +7,8 @@ from exporter import utils
 from exporter.metadata.checksums import FileChecksums
 from exporter.metadata.datafile import DataFile
 from exporter.metadata.exceptions import MetadataParseException
-from exporter.scratch import MetadataResource, MetadataService, MetadataProvenance
+from exporter.metadata.provenance import MetadataProvenance
+from exporter.scratch import MetadataResource, MetadataService
 
 
 class MetadataResourceTest(TestCase):
