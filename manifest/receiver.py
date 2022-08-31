@@ -1,11 +1,27 @@
 import json
 import logging
 import time
-from typing import List
+from typing import List, Type
+
+from kombu import Consumer
+from kombu.mixins import ConsumerProducerMixin
 
 from exporter.queue.config import QueueConfig
 from manifest.exporter import ManifestExporter
-from receiver import Receiver
+
+
+class Worker(ConsumerProducerMixin):
+    def __init__(self, connection, queues):
+        self.connection = connection
+        self.queues = queues
+
+    def get_consumers(self, consumer: Type[Consumer], channel):
+        return [consumer(queues=self.queues,
+                         callbacks=[self.on_message])]
+
+
+class Receiver(Worker):
+    pass
 
 
 class ManifestReceiver(Receiver):
