@@ -14,7 +14,7 @@ from exporter.schema import SchemaService
 from exporter.session_context import configure_logger
 from exporter.terra.client import TerraClient
 from exporter.terra.exporter import TerraExporter
-from exporter.terra.terra_listener import TerraListener
+from exporter.terra.listener import TerraListener
 from manifest.exporter import ManifestExporter
 from manifest.generator import ManifestGenerator
 from manifest.receiver import ManifestReceiver
