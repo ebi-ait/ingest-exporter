@@ -3,7 +3,6 @@ from dataclasses import asdict
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
-from exporter import utils
 from exporter.metadata.checksums import FileChecksums
 from exporter.metadata.datafile import DataFile
 from exporter.metadata.exceptions import MetadataParseException
@@ -81,7 +80,7 @@ class MetadataResourceTest(TestCase):
         self.assertIsNotNone(metadata)
         self.assertEqual('biomaterial', metadata.metadata_type)
         self.assertEqual(data['content'], metadata.metadata_json)
-        self.assertEqual(utils.to_dcp_version(data['dcpVersion']), metadata.dcp_version)
+        self.assertEqual(MetadataResource.to_dcp_version(data['dcpVersion']), metadata.dcp_version)
 
         # and:
         self.assertEqual(uuid_value, metadata.uuid)
@@ -116,7 +115,7 @@ class MetadataResourceTest(TestCase):
         # then
         self.assertRaises(ValueError, lambda: meta_str.index('full_resource'))
 
-    @patch('exporter.utils.to_dcp_version')
+    @patch('exporter.metadata.resource.MetadataResource.to_dcp_version')
     def test_dcp_version_is_updated_on_init(self, to_dcp: MagicMock):
         # given
         to_dcp.return_value = 'IamADateTimeString'
@@ -128,6 +127,34 @@ class MetadataResourceTest(TestCase):
         # then
         to_dcp.assert_called_with(data.get('dcpVersion'))
         self.assertEqual(meta.dcp_version, to_dcp.return_value)
+
+    def test_to_dcp_version__returns_correct_dcp_format__given_short_date(self):
+        # given:
+        date_string = '2019-05-23T16:53:40Z'
+
+        # expect:
+        self.assertEqual('2019-05-23T16:53:40.000000Z', MetadataResource.to_dcp_version(date_string))
+
+    def test_to_dcp_version__returns_correct_dcp_format__given_3_decimal_places(self):
+        # given:
+        date_string = '2019-05-23T16:53:40.931Z'
+
+        # expect:
+        self.assertEqual('2019-05-23T16:53:40.931000Z', MetadataResource.to_dcp_version(date_string))
+
+    def test_to_dcp_version__returns_correct_dcp_format__given_2_decimal_places(self):
+        # given:
+        date_string = '2019-05-23T16:53:40.93Z'
+
+        # expect:
+        self.assertEqual('2019-05-23T16:53:40.930000Z', MetadataResource.to_dcp_version(date_string))
+
+    def test_to_dcp_version__returns_correct_dcp_format__given_6_decimal_places(self):
+        # given:
+        date_string = '2019-05-23T16:53:40.123456Z'
+
+        # expect:
+        self.assertEqual(date_string, MetadataResource.to_dcp_version(date_string))
 
     @staticmethod
     def _create_test_data(uuid_value):
@@ -166,7 +193,7 @@ class MetadataServiceTest(TestCase):
         self.assertEqual('biomaterial', metadata_resource.metadata_type)
         self.assertEqual(uuid_value, metadata_resource.uuid)
         self.assertEqual(raw_metadata['content'], metadata_resource.metadata_json)
-        self.assertEqual(utils.to_dcp_version(raw_metadata['dcpVersion']), metadata_resource.dcp_version)
+        self.assertEqual(MetadataResource.to_dcp_version(raw_metadata['dcpVersion']), metadata_resource.dcp_version)
         self.assertEqual(raw_metadata['submissionDate'], metadata_resource.provenance.submission_date)
         self.assertEqual(raw_metadata['updateDate'], metadata_resource.provenance.update_date)
 

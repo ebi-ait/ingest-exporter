@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime
 from unittest import TestCase
-from testfixtures import log_capture
 from unittest.mock import patch
+
+from testfixtures import log_capture
 
 from exporter import utils
 
@@ -13,34 +14,6 @@ class UtilsTest(TestCase):
         handler = logging.StreamHandler()
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
-
-    def test_to_dcp_version__returns_correct_dcp_format__given_short_date(self):
-        # given:
-        date_string = '2019-05-23T16:53:40Z'
-
-        # expect:
-        self.assertEqual('2019-05-23T16:53:40.000000Z', utils.to_dcp_version(date_string))
-
-    def test_to_dcp_version__returns_correct_dcp_format__given_3_decimal_places(self):
-        # given:
-        date_string = '2019-05-23T16:53:40.931Z'
-
-        # expect:
-        self.assertEqual('2019-05-23T16:53:40.931000Z', utils.to_dcp_version(date_string))
-
-    def test_to_dcp_version__returns_correct_dcp_format__given_2_decimal_places(self):
-        # given:
-        date_string = '2019-05-23T16:53:40.93Z'
-
-        # expect:
-        self.assertEqual('2019-05-23T16:53:40.930000Z', utils.to_dcp_version(date_string))
-
-    def test_to_dcp_version__returns_correct_dcp_format__given_6_decimal_places(self):
-        # given:
-        date_string = '2019-05-23T16:53:40.123456Z'
-
-        # expect:
-        self.assertEqual(date_string, utils.to_dcp_version(date_string))
 
     @utils.exec_time(logging.getLogger('test_logger'), logging.INFO)
     def hello(self, name: str):
