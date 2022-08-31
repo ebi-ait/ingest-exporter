@@ -4,8 +4,8 @@ from unittest import TestCase
 from kombu import Connection, Message
 from mock import MagicMock
 
-from exporter.amqp import QueueConfig
 from exporter.ingest.service import IngestService
+from exporter.queue.config import QueueConfig
 from exporter.terra.terra_exporter import TerraExporter
 from exporter.terra.terra_listener import _TerraListener
 

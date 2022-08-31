@@ -7,8 +7,8 @@ from typing import Type, List, Dict
 from kombu import Connection, Consumer, Message
 from kombu.mixins import ConsumerProducerMixin
 
-from exporter.amqp import QueueConfig, AmqpConnConfig
 from exporter.ingest.service import IngestService
+from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.session_context import SessionContext
 from exporter.terra.exceptions import ExperimentMessageParseException
 from exporter.terra.terra_exporter import TerraExporter

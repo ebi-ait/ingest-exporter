@@ -1,10 +1,9 @@
 import json
 import logging
 import time
-
 from typing import List
 
-from exporter.amqp import QueueConfig
+from exporter.queue.config import QueueConfig
 from manifest.exporter import ManifestExporter
 from receiver import Receiver
 

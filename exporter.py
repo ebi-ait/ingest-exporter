@@ -6,10 +6,10 @@ from threading import Thread
 from hca_ingest.api.ingestapi import IngestApi
 from kombu import Connection
 
-from exporter.amqp import AmqpConnConfig, QueueConfig
 from exporter.graph.graph_crawler import GraphCrawler
 from exporter.ingest.service import IngestService
 from exporter.metadata.service import MetadataService
+from exporter.queue.config import AmqpConnConfig, QueueConfig
 from exporter.schema import SchemaService
 from exporter.session_context import configure_logger
 from exporter.terra.client import TerraClient

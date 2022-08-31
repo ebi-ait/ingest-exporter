@@ -4,6 +4,15 @@ from kombu import Queue, Exchange, Producer
 
 
 @dataclass
+class AmqpConnConfig:
+    host: str
+    port: int
+
+    def broker_url(self):
+        return f'amqp://{self.host}:{str(self.port)}'
+
+
+@dataclass
 class QueueConfig:
     exchange: str
     routing_key: str
@@ -25,12 +34,3 @@ class QueueConfig:
             retry=self.retry,
             retry_policy=self.retry_policy
         )
-
-
-@dataclass
-class AmqpConnConfig:
-    host: str
-    port: int
-
-    def broker_url(self):
-        return f'amqp://{self.host}:{str(self.port)}'
