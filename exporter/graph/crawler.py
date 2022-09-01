@@ -4,10 +4,11 @@ from functools import reduce
 from operator import iconcat
 from typing import List, Iterable, Optional, Callable
 
-from exporter.graph.experiment_graph import ExperimentGraph, ProcessLink, SupplementaryFileLink, \
+from exporter.graph.experiment_graph import ExperimentGraph, SupplementaryFileLink, \
     SupplementedEntity, SupplementaryFile
 from exporter.graph.input import Input
 from exporter.graph.output import Output
+from exporter.graph.process_link import ProcessLink
 from exporter.graph.protocol_link import ProtocolLink
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
