@@ -4,7 +4,7 @@ from unittest import TestCase
 from hca_ingest.api.ingestapi import IngestApi
 from mock import Mock, MagicMock
 
-from exporter.schema import SchemaService
+from exporter.schema.service import SchemaService
 
 
 class SchemaServiceTest(TestCase):

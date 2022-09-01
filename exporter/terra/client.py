@@ -14,7 +14,7 @@ from exporter.graph.experiment_graph import LinkSet
 from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
-from exporter.schema import SchemaService
+from exporter.schema.service import SchemaService
 from exporter.terra.gcs.storage import Streamable, GcsStorage
 from exporter.terra.gcs.transfer import TransferJobSpec, GcsTransfer
 from exporter.utils import log_function_and_params

@@ -7,7 +7,7 @@ from exporter.graph.graph_crawler import GraphCrawler
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
-from exporter.schema import SchemaService
+from exporter.schema.service import SchemaService
 from exporter.terra.client import TerraClient
 from tests.mocks.files import MockEntityFiles
 

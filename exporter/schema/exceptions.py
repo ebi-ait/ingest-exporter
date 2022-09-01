@@ -1,0 +1,2 @@
+class SchemaParseException(Exception):
+    pass
