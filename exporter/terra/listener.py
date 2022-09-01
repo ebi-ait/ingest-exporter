@@ -55,13 +55,13 @@ class _TerraListener(ConsumerProducerMixin):
     def __init__(self,
                  connection: Connection,
                  terra_exporter: TerraExporter,
-                 job_service: IngestService,
+                 ingest_service: IngestService,
                  experiment_queue_config: QueueConfig,
                  publish_queue_config: QueueConfig,
                  executor: ThreadPoolExecutor):
         self.connection = connection
         self.terra_exporter = terra_exporter
-        self.job_service = job_service
+        self.ingest_service = ingest_service
         self.experiment_queue = experiment_queue_config
         self.publish_queue = publish_queue_config
         self.executor = executor
@@ -107,7 +107,7 @@ class _TerraListener(ConsumerProducerMixin):
 
     def log_complete_experiment(self, msg: Message, experiment: ExperimentMessage):
         self.logger.info(f'Marking successful experiment job_id {experiment.job_id} and process_id {experiment.process_id}')
-        self.job_service.create_export_entity(experiment.job_id, experiment.process_id)
+        self.ingest_service.create_export_entity(experiment.job_id, experiment.process_id)
         self.logger.info(f'Creating new message in publish queue for experiment: {experiment}')
         self.publish_queue.send_message(self.producer, ExperimentMessage.as_dict(experiment))
         self.logger.info(f'Acknowledging export experiment message: {experiment}')
@@ -119,16 +119,16 @@ class TerraListener:
     def __init__(self,
                  amqp_conn_config: AmqpConnConfig,
                  terra_exporter: TerraExporter,
-                 job_service: IngestService,
+                 ingest_service: IngestService,
                  experiment_queue_config: QueueConfig,
                  publish_queue_config: QueueConfig):
         self.amqp_conn_config = amqp_conn_config
         self.terra_exporter = terra_exporter
-        self.job_service = job_service
+        self.ingest_service = ingest_service
         self.experiment_queue_config = experiment_queue_config
         self.publish_queue_config = publish_queue_config
 
     def run(self):
         with Connection(self.amqp_conn_config.broker_url()) as conn:
-            _terra_listener = _TerraListener(conn, self.terra_exporter, self.job_service, self.experiment_queue_config, self.publish_queue_config, ThreadPoolExecutor())
+            _terra_listener = _TerraListener(conn, self.terra_exporter, self.ingest_service, self.experiment_queue_config, self.publish_queue_config, ThreadPoolExecutor())
             _terra_listener.run()

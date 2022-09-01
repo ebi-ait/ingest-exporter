@@ -18,12 +18,12 @@ class TerraExporter:
                  metadata_service: MetadataService,
                  graph_crawler: GraphCrawler,
                  dcp_staging_client: TerraClient,
-                 job_service: IngestService):
+                 ingest_service: IngestService):
         self.ingest_client = ingest_client
         self.metadata_service = metadata_service
         self.graph_crawler = graph_crawler
         self.dcp_staging_client = dcp_staging_client
-        self.job_service = job_service
+        self.ingest_service = ingest_service
         self.logger = logging.getLogger(LOGGER_NAME)
         self.logger.setLevel(logging.INFO)
 
@@ -36,7 +36,7 @@ class TerraExporter:
         export_data = "Export metadata" not in submission.get("submitActions", [])
 
         self.logger.info(f"The export data flag has been set to {export_data}")
-        if export_data and not self.job_service.is_data_transfer_complete(export_job_id):
+        if export_data and not self.ingest_service.is_data_transfer_complete(export_job_id):
             self.logger.info("Exporting data files..")
             transfer_job_spec, success = self.dcp_staging_client.transfer_data_files(submission, project.uuid,
                                                                                      export_job_id)
@@ -63,12 +63,12 @@ class TerraExporter:
             self.logger.info("Waiting for job to complete..")
             self.dcp_staging_client.wait_for_transfer_to_complete(transfer_job_spec.name, compute_wait_time,
                                                                   start_wait_time_sec, max_wait_time_sec)
-            self.job_service.set_data_transfer_complete(export_job_id)
+            self.ingest_service.set_data_transfer_complete(export_job_id)
         else:
             self.logger.info("Google Cloud Transfer job was already created..")
             self.logger.info("Waiting for job to complete..")
-            self.job_service.wait_for_data_transfer_to_complete(export_job_id, compute_wait_time, start_wait_time_sec,
-                                                                max_wait_time_sec)
+            self.ingest_service.wait_for_data_transfer_to_complete(export_job_id, compute_wait_time, start_wait_time_sec,
+                                                                   max_wait_time_sec)
 
     def get_process(self, process_uuid) -> MetadataResource:
         return MetadataResource.from_dict(self.ingest_client.get_entity_by_uuid('processes', process_uuid))

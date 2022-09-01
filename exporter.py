@@ -99,14 +99,14 @@ def setup_terra_exporter() -> Thread:
                           .with_gcs_xfer(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix, aws_access_key_id, aws_access_key_secret)
                           .build())
 
-    terra_job_service = IngestService(ingest_client)
-    terra_exporter = TerraExporter(ingest_client, metadata_service, graph_crawler, dcp_staging_client, terra_job_service)
+    ingest_service = IngestService(ingest_client)
+    terra_exporter = TerraExporter(ingest_client, metadata_service, graph_crawler, dcp_staging_client, ingest_service)
 
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
 
-    terra_listener = TerraListener(amqp_conn_config, terra_exporter, terra_job_service, EXPERIMENT_QUEUE_CONFIG, EXPERIMENT_COMPLETE_CONFIG)
+    terra_listener = TerraListener(amqp_conn_config, terra_exporter, ingest_service, EXPERIMENT_QUEUE_CONFIG, EXPERIMENT_COMPLETE_CONFIG)
 
     terra_exporter_listener_process = Thread(target=lambda: terra_listener.run())
     terra_exporter_listener_process.start()

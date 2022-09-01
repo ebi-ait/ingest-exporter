@@ -18,17 +18,17 @@ class TerraMessageHandlerTest(TestCase):
             'retry_policy': {}
         }
         self.exporter_mock = MagicMock(spec=TerraExporter)
-        self.job_service_mock = MagicMock(spec=IngestService)
+        self.ingest_service_mock = MagicMock(spec=IngestService)
         self.listener = _TerraListener(
             connection=MagicMock(spec=Connection),
             terra_exporter=self.exporter_mock,
-            job_service=self.job_service_mock,
+            ingest_service=self.ingest_service_mock,
             experiment_queue_config=MagicMock(spec=QueueConfig),
             publish_queue_config=QueueConfig('exchange', 'routing_key'),
             executor=MagicMock(spec=ThreadPoolExecutor)
         )
         self.exporter_mock.export = MagicMock()
-        self.job_service_mock.create_export_entity = MagicMock()
+        self.ingest_service_mock.create_export_entity = MagicMock()
 
     def test_success(self):
         # Given
@@ -41,7 +41,7 @@ class TerraMessageHandlerTest(TestCase):
 
         # Then
         self.exporter_mock.export.assert_called_with("P", "S", "E")
-        self.job_service_mock.create_export_entity.assert_called_with("E", "D")
+        self.ingest_service_mock.create_export_entity.assert_called_with("E", "D")
         message.ack.assert_called_once()
 
     def test_failure(self):
