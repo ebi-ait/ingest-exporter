@@ -7,10 +7,12 @@ from exporter.graph.crawler import GraphCrawler
 from exporter.ingest.service import IngestService
 from exporter.metadata.service import MetadataService
 from exporter.queue.config import QueueConfig, AmqpConnConfig
+from exporter.queue.connector import QueueConnector
+from exporter.queue.listener import QueueListener
 from exporter.schema.service import SchemaService
 from exporter.terra.builder import ClientBuilder
-from exporter.terra.experiment.connector import ExperimentConnector
 from exporter.terra.experiment.exporter import TerraExperimentExporter
+from exporter.terra.experiment.handler import TerraExperimentHandler
 
 EXCHANGE = 'ingest.exporter.exchange'
 RETRY_POLICY = {
@@ -63,10 +65,11 @@ def setup_terra_experiment_exporter() -> Thread:
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
+    handler = TerraExperimentHandler(terra_exporter, ingest_service, EXPERIMENT_COMPLETE_CONFIG)
+    listener = QueueListener(EXPERIMENT_QUEUE_CONFIG, handler)
+    connector = QueueConnector(amqp_conn_config, listener)
 
-    terra_listener = ExperimentConnector(amqp_conn_config, terra_exporter, ingest_service, EXPERIMENT_QUEUE_CONFIG, EXPERIMENT_COMPLETE_CONFIG)
-
-    terra_exporter_listener_process = Thread(target=lambda: terra_listener.run())
+    terra_exporter_listener_process = Thread(target=lambda: connector.run())
     terra_exporter_listener_process.start()
 
     return terra_exporter_listener_process

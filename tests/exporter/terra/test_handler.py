@@ -1,13 +1,12 @@
-from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
 
-from kombu import Connection, Message
+from kombu import Message
 from mock import MagicMock
 
 from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig
 from exporter.terra.experiment.exporter import TerraExperimentExporter
-from exporter.terra.experiment.listener import TerraExperimentListener
+from exporter.terra.experiment.handler import TerraExperimentHandler
 
 
 class TerraMessageHandlerTest(TestCase):
@@ -19,14 +18,15 @@ class TerraMessageHandlerTest(TestCase):
         }
         self.exporter_mock = MagicMock(spec=TerraExperimentExporter)
         self.ingest_service_mock = MagicMock(spec=IngestService)
-        self.listener = TerraExperimentListener(
-            connection=MagicMock(spec=Connection),
-            terra_exporter=self.exporter_mock,
-            ingest_service=self.ingest_service_mock,
-            experiment_queue_config=MagicMock(spec=QueueConfig),
-            publish_queue_config=QueueConfig('exchange', 'routing_key'),
-            executor=MagicMock(spec=ThreadPoolExecutor)
+        self.producer = MagicMock()
+        self.producer.publish = MagicMock()
+        self.handler = TerraExperimentHandler(
+            self.exporter_mock,
+            self.ingest_service_mock,
+            QueueConfig('exchange', 'routing_key')
         )
+        self.handler.add_producer(self.producer)
+
         self.exporter_mock.export = MagicMock()
         self.ingest_service_mock.create_export_entity = MagicMock()
 
@@ -37,12 +37,13 @@ class TerraMessageHandlerTest(TestCase):
         message.ack = MagicMock()
 
         # When
-        self.listener._experiment_message_handler(body, message)
+        self.handler.handle_message(body, message)
 
         # Then
         self.exporter_mock.export.assert_called_with("P", "S", "E")
         self.ingest_service_mock.create_export_entity.assert_called_with("E", "D")
         message.ack.assert_called_once()
+        self.producer.publish.assert_called_once()
 
     def test_failure(self):
         # Given
@@ -52,7 +53,7 @@ class TerraMessageHandlerTest(TestCase):
         self.exporter_mock.export.side_effect = Exception('unhandled exception')
 
         # When
-        self.listener._experiment_message_handler(body, message)
+        self.handler.handle_message(body, message)
 
         # Then
         self.exporter_mock.export.assert_called_with("P", "S", "E")
