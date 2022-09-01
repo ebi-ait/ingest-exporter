@@ -1,25 +1,9 @@
 from copy import deepcopy
-from dataclasses import dataclass
-from typing import List, Dict, Iterable, Any, Union
+from typing import List, Dict, Union
 
 from exporter.graph.process_link import ProcessLink
-from exporter.graph.supplementary_file import SupplementaryFile
-from exporter.graph.supplemented_entity import SupplementedEntity
+from exporter.graph.supplementary_file_link import SupplementaryFileLink
 from exporter.metadata.resource import MetadataResource
-
-
-@dataclass
-class SupplementaryFileLink:
-    supplemented_entity: SupplementedEntity
-    files: Iterable[SupplementaryFile]
-
-    def to_dict(self) -> Dict[str, Any]:
-        return dict(
-            link_type="supplementary_file_link",
-            entity=self.supplemented_entity.to_dict(),
-            files=[file.to_dict() for file in self.files]
-        )
-
 
 Link = Union[ProcessLink, SupplementaryFileLink]
 
