@@ -5,7 +5,8 @@ from operator import iconcat
 from typing import List, Iterable, Optional, Callable
 
 from exporter.graph.experiment_graph import ExperimentGraph, ProcessLink, Input, Output, \
-    ProtocolLink, SupplementaryFileLink, SupplementedEntity, SupplementaryFile
+    SupplementaryFileLink, SupplementedEntity, SupplementaryFile
+from exporter.graph.protocol_link import ProtocolLink
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
 

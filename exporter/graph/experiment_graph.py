@@ -2,23 +2,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Set, Dict, Iterable, Any, Union
 
+from exporter.graph.protocol_link import ProtocolLink
 from exporter.metadata.resource import MetadataResource
-
-
-@dataclass
-class ProtocolLink:
-    protocol_type: str
-    protocol_uuid: str
-
-    @staticmethod
-    def from_metadata_resource(metadata: MetadataResource) -> 'ProtocolLink':
-        return ProtocolLink(metadata.concrete_type(), metadata.uuid)
-
-    def to_dict(self) -> Dict:
-        return dict(
-            protocol_type=self.protocol_type,
-            protocol_id=self.protocol_uuid
-        )
 
 
 @dataclass
@@ -48,7 +33,8 @@ class Output:
 class ProcessLink:
 
     def __init__(self, process_uuid: str, process_type: str,
-                 inputs: Iterable[Input], outputs: Iterable[Output], protocols: Iterable[ProtocolLink]):
+                 inputs: Iterable[Input], outputs: Iterable[Output], protocols: Iterable[
+                ProtocolLink]):
         self._input_uuids: Set[str] = set()
         self._outputs_uuids: Set[str] = set()
         self._protocol_uuids: Set[str] = set()
