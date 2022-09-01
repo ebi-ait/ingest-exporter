@@ -1,60 +1,22 @@
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from typing import Type, List, Dict
+from typing import Type, List
 
 from kombu import Connection, Consumer, Message
 from kombu.mixins import ConsumerProducerMixin
 
 from exporter.ingest.service import IngestService
-from exporter.queue.config import QueueConfig, AmqpConnConfig
+from exporter.queue.config import QueueConfig
 from exporter.session_context import SessionContext
-from exporter.terra.exceptions import ExperimentMessageParseException
-from exporter.terra.exporter import TerraExporter
+from exporter.terra.experiment.exporter import TerraExperimentExporter
+from exporter.terra.experiment.message import ExperimentMessage
 
 
-@dataclass
-class ExperimentMessage:
-    process_id: str
-    process_uuid: str
-    submission_uuid: str
-    experiment_index: int
-    total: int
-    job_id: str
-
-    @staticmethod
-    def from_dict(data: Dict) -> 'ExperimentMessage':
-        try:
-            return ExperimentMessage(data["documentId"],
-                                     data["documentUuid"],
-                                     data["envelopeUuid"],
-                                     data["index"],
-                                     data["total"],
-                                     data["exportJobId"])
-        except (KeyError, TypeError) as e:
-            raise ExperimentMessageParseException(e)
-
-    @staticmethod
-    def as_dict(exp: 'ExperimentMessage') -> Dict:
-        try:
-            return {
-                "documentId": exp.process_id,
-                "documentUuid": exp.process_uuid,
-                "envelopeUuid": exp.submission_uuid,
-                "index": exp.experiment_index,
-                "total": exp.total,
-                "exportJobId": exp.job_id
-            }
-        except (KeyError, TypeError) as e:
-            raise ExperimentMessageParseException(e)
-
-
-class _TerraListener(ConsumerProducerMixin):
-
+class TerraExperimentListener(ConsumerProducerMixin):
     def __init__(self,
                  connection: Connection,
-                 terra_exporter: TerraExporter,
+                 terra_exporter: TerraExperimentExporter,
                  ingest_service: IngestService,
                  experiment_queue_config: QueueConfig,
                  publish_queue_config: QueueConfig,
@@ -112,23 +74,3 @@ class _TerraListener(ConsumerProducerMixin):
         self.publish_queue.send_message(self.producer, ExperimentMessage.as_dict(experiment))
         self.logger.info(f'Acknowledging export experiment message: {experiment}')
         msg.ack()
-
-
-class TerraListener:
-
-    def __init__(self,
-                 amqp_conn_config: AmqpConnConfig,
-                 terra_exporter: TerraExporter,
-                 ingest_service: IngestService,
-                 experiment_queue_config: QueueConfig,
-                 publish_queue_config: QueueConfig):
-        self.amqp_conn_config = amqp_conn_config
-        self.terra_exporter = terra_exporter
-        self.ingest_service = ingest_service
-        self.experiment_queue_config = experiment_queue_config
-        self.publish_queue_config = publish_queue_config
-
-    def run(self):
-        with Connection(self.amqp_conn_config.broker_url()) as conn:
-            _terra_listener = _TerraListener(conn, self.terra_exporter, self.ingest_service, self.experiment_queue_config, self.publish_queue_config, ThreadPoolExecutor())
-            _terra_listener.run()

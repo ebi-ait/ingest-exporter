@@ -13,8 +13,8 @@ from exporter.queue.config import AmqpConnConfig, QueueConfig
 from exporter.schema.service import SchemaService
 from exporter.session_context import configure_logger
 from exporter.terra.builder import ClientBuilder
-from exporter.terra.exporter import TerraExporter
-from exporter.terra.listener import TerraListener
+from exporter.terra.experiment.connector import ExperimentConnector
+from exporter.terra.experiment.exporter import TerraExperimentExporter
 from manifest.exporter import ManifestExporter
 from manifest.generator import ManifestGenerator
 from manifest.receiver import ManifestReceiver
@@ -99,13 +99,13 @@ def setup_terra_exporter() -> Thread:
                           .build())
 
     ingest_service = IngestService(ingest_client)
-    terra_exporter = TerraExporter(ingest_client, metadata_service, graph_crawler, terra_client, ingest_service)
+    terra_exporter = TerraExperimentExporter(ingest_client, metadata_service, graph_crawler, terra_client, ingest_service)
 
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
 
-    terra_listener = TerraListener(amqp_conn_config, terra_exporter, ingest_service, EXPERIMENT_QUEUE_CONFIG, EXPERIMENT_COMPLETE_CONFIG)
+    terra_listener = ExperimentConnector(amqp_conn_config, terra_exporter, ingest_service, EXPERIMENT_QUEUE_CONFIG, EXPERIMENT_COMPLETE_CONFIG)
 
     terra_exporter_listener_process = Thread(target=lambda: terra_listener.run())
     terra_exporter_listener_process.start()

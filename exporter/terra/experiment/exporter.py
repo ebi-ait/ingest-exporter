@@ -12,7 +12,7 @@ from exporter.terra.client import TerraClient
 LOGGER_NAME = __name__
 
 
-class TerraExporter:
+class TerraExperimentExporter:
     def __init__(self,
                  ingest_client: IngestApi,
                  metadata_service: MetadataService,

@@ -6,8 +6,8 @@ from mock import MagicMock
 
 from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig
-from exporter.terra.exporter import TerraExporter
-from exporter.terra.listener import _TerraListener
+from exporter.terra.experiment.exporter import TerraExperimentExporter
+from exporter.terra.experiment.listener import TerraExperimentListener
 
 
 class TerraMessageHandlerTest(TestCase):
@@ -17,9 +17,9 @@ class TerraMessageHandlerTest(TestCase):
             'routing_key': 'routing_key',
             'retry_policy': {}
         }
-        self.exporter_mock = MagicMock(spec=TerraExporter)
+        self.exporter_mock = MagicMock(spec=TerraExperimentExporter)
         self.ingest_service_mock = MagicMock(spec=IngestService)
-        self.listener = _TerraListener(
+        self.listener = TerraExperimentListener(
             connection=MagicMock(spec=Connection),
             terra_exporter=self.exporter_mock,
             ingest_service=self.ingest_service_mock,
