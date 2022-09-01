@@ -10,7 +10,7 @@ from hca_ingest.api.ingestapi import IngestApi
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
-from exporter.graph.experiment_graph import LinkSet
+from exporter.graph.link_set import LinkSet
 from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
