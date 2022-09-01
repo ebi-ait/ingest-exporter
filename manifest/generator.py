@@ -3,7 +3,7 @@ from typing import Dict, List
 from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.graph.crawler import GraphCrawler
-from exporter.graph.experiment_graph import ExperimentGraph
+from exporter.graph.experiment import ExperimentGraph
 from exporter.metadata.datafile import DataFile
 from exporter.metadata.resource import MetadataResource
 from manifest.manifests import AssayManifest

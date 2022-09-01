@@ -4,7 +4,7 @@ from functools import reduce
 from operator import iconcat
 from typing import List, Iterable, Optional, Callable
 
-from exporter.graph.experiment_graph import ExperimentGraph
+from exporter.graph.experiment import ExperimentGraph
 from exporter.graph.input import Input
 from exporter.graph.output import Output
 from exporter.graph.process_link import ProcessLink
