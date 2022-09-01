@@ -12,7 +12,7 @@ from exporter.metadata.service import MetadataService
 from exporter.queue.config import AmqpConnConfig, QueueConfig
 from exporter.schema.service import SchemaService
 from exporter.session_context import configure_logger
-from exporter.terra.client import TerraClient
+from exporter.terra.builder import ClientBuilder
 from exporter.terra.exporter import TerraExporter
 from exporter.terra.listener import TerraListener
 from manifest.exporter import ManifestExporter
@@ -91,8 +91,7 @@ def setup_terra_exporter() -> Thread:
     metadata_service = MetadataService(ingest_client)
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
-    terra_client = (TerraClient
-                          .Builder()
+    terra_client = (ClientBuilder()
                           .with_ingest_client(ingest_client)
                           .with_schema_service(schema_service)
                           .with_gcs_info(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix)
