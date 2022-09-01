@@ -3,20 +3,9 @@ from dataclasses import dataclass
 from typing import List, Dict, Iterable, Any, Union
 
 from exporter.graph.process_link import ProcessLink
+from exporter.graph.supplementary_file import SupplementaryFile
 from exporter.graph.supplemented_entity import SupplementedEntity
 from exporter.metadata.resource import MetadataResource
-
-
-@dataclass
-class SupplementaryFile:
-    file_type: str
-    file_id: str
-
-    def to_dict(self) -> Dict[str, str]:
-        return dict(
-            file_type=self.file_type,
-            file_id=self.file_id
-        )
 
 
 @dataclass
