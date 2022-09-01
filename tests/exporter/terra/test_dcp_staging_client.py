@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock
 
 from hca_ingest.api.ingestapi import IngestApi
 
-from exporter.graph.graph_crawler import GraphCrawler
+from exporter.graph.crawler import GraphCrawler
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService

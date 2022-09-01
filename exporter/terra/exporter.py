@@ -3,7 +3,7 @@ import logging
 from hca_ingest.api.ingestapi import IngestApi
 
 from exporter import utils
-from exporter.graph.graph_crawler import GraphCrawler
+from exporter.graph.crawler import GraphCrawler
 from exporter.ingest.service import IngestService
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
