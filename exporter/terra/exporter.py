@@ -17,12 +17,12 @@ class TerraExporter:
                  ingest_client: IngestApi,
                  metadata_service: MetadataService,
                  graph_crawler: GraphCrawler,
-                 dcp_staging_client: TerraClient,
+                 terra_client: TerraClient,
                  ingest_service: IngestService):
         self.ingest_client = ingest_client
         self.metadata_service = metadata_service
         self.graph_crawler = graph_crawler
-        self.dcp_staging_client = dcp_staging_client
+        self.terra_client = terra_client
         self.ingest_service = ingest_service
         self.logger = logging.getLogger(LOGGER_NAME)
         self.logger.setLevel(logging.INFO)
@@ -38,16 +38,16 @@ class TerraExporter:
         self.logger.info(f"The export data flag has been set to {export_data}")
         if export_data and not self.ingest_service.is_data_transfer_complete(export_job_id):
             self.logger.info("Exporting data files..")
-            transfer_job_spec, success = self.dcp_staging_client.transfer_data_files(submission, project.uuid,
+            transfer_job_spec, success = self.terra_client.transfer_data_files(submission, project.uuid,
                                                                                      export_job_id)
             self._wait_for_data_transfer_to_complete(export_job_id, success, transfer_job_spec)
 
         self.logger.info("Exporting metadata..")
         experiment_graph = self.graph_crawler.generate_complete_experiment_graph(process, project)
 
-        self.dcp_staging_client.write_metadatas(experiment_graph.nodes.get_nodes(), project.uuid)
-        self.dcp_staging_client.write_links(experiment_graph.links, process_uuid, process.dcp_version, project.uuid)
-        self.dcp_staging_client.write_staging_area_json(project.uuid)
+        self.terra_client.write_metadatas(experiment_graph.nodes.get_nodes(), project.uuid)
+        self.terra_client.write_links(experiment_graph.links, process_uuid, process.dcp_version, project.uuid)
+        self.terra_client.write_staging_area_json(project.uuid)
 
     # Only the exporter process which is successful should be polling GCP Transfer service if the job is complete
     # This is to avoid hitting the rate limit 500 requests per 100 sec https://cloud.google.com/storage-transfer/quotas
@@ -61,7 +61,7 @@ class TerraExporter:
         if success:
             self.logger.info("Google Cloud Transfer job was successfully created..")
             self.logger.info("Waiting for job to complete..")
-            self.dcp_staging_client.wait_for_transfer_to_complete(transfer_job_spec.name, compute_wait_time,
+            self.terra_client.wait_for_transfer_to_complete(transfer_job_spec.name, compute_wait_time,
                                                                   start_wait_time_sec, max_wait_time_sec)
             self.ingest_service.set_data_transfer_complete(export_job_id)
         else:

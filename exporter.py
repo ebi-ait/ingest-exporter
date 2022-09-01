@@ -91,7 +91,7 @@ def setup_terra_exporter() -> Thread:
     metadata_service = MetadataService(ingest_client)
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
-    dcp_staging_client = (TerraClient
+    terra_client = (TerraClient
                           .Builder()
                           .with_ingest_client(ingest_client)
                           .with_schema_service(schema_service)
@@ -100,7 +100,7 @@ def setup_terra_exporter() -> Thread:
                           .build())
 
     ingest_service = IngestService(ingest_client)
-    terra_exporter = TerraExporter(ingest_client, metadata_service, graph_crawler, dcp_staging_client, ingest_service)
+    terra_exporter = TerraExporter(ingest_client, metadata_service, graph_crawler, terra_client, ingest_service)
 
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))

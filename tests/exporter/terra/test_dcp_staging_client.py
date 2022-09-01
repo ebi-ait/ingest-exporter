@@ -15,18 +15,18 @@ from tests.mocks.files import MockEntityFiles
 class AbstractFileGenerationBaseTests:
     schema_url = 'not_set'
 
-    def init_dcp_staging_client(self) -> TerraClient:
-        dcp_staging_client = TerraClient(schema_service=self.schema_service,
+    def init_terra_client(self) -> TerraClient:
+        terra_client = TerraClient(schema_service=self.schema_service,
                                          ingest_client=None,
                                          gcs_storage=None,
                                          gcs_xfer=None)
-        return dcp_staging_client
+        return terra_client
 
     def setUp(self) -> None:
         # Setup Entity Files Utility
         self.ingest = self.init_mock_ingest()
         self.schema_service = self.init_schema_service(self.ingest)
-        self.dcp_staging_client: TerraClient = self.init_dcp_staging_client()
+        self.terra_client: TerraClient = self.init_terra_client()
         self.mock_files = MockEntityFiles(base_uri='http://mock-ingest-api/')
 
     def init_schema_service(self, mock_ingest_api):
@@ -67,7 +67,7 @@ class LinksJsonTest(AbstractFileGenerationBaseTests, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.file_generation_function = self.dcp_staging_client.generate_links_json
+        self.file_generation_function = self.terra_client.generate_links_json
 
     def create_invalid_document(self):
         file = self.create_valid_file()
@@ -88,7 +88,7 @@ class FileDescriptorTest(AbstractFileGenerationBaseTests, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.file_generation_function = self.dcp_staging_client.generate_file_descriptor_json
+        self.file_generation_function = self.terra_client.generate_file_descriptor_json
 
     def create_invalid_document(self):
         file = self.create_valid_file()
