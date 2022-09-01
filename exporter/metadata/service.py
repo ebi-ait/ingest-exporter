@@ -14,14 +14,12 @@ class MetadataService:
         raw_metadata = self.ingest_client.get_entity_by_callback_link(resource_link)
         return MetadataResource.from_dict(raw_metadata)
 
-    def get_derived_by_processes(self, experiment_material: MetadataResource) -> List[
-        MetadataResource]:
+    def get_derived_by_processes(self, experiment_material: MetadataResource) -> List[MetadataResource]:
         return MetadataService.parse_metadata_resources(
             self.ingest_client.get_related_entities('derivedByProcesses', experiment_material.full_resource,
                                                     'processes'))
 
-    def get_input_to_processes(self, experiment_material: MetadataResource) -> List[
-        MetadataResource]:
+    def get_input_to_processes(self, experiment_material: MetadataResource) -> List[MetadataResource]:
         return MetadataService.parse_metadata_resources(
             self.ingest_client.get_related_entities('inputToProcesses', experiment_material.full_resource, 'processes'))
 

@@ -45,9 +45,11 @@ class GraphCrawler:
         downward_graph = self._crawl(process, self._crawl_outputs)
         initial_graph = ExperimentGraph()
 
-        return reduce(lambda g1, g2: g1.extend(g2),
-               [upward_graph, downward_graph],
-               initial_graph)
+        return reduce(
+            lambda g1, g2: g1.extend(g2),
+            [upward_graph, downward_graph],
+            initial_graph
+        )
 
     def generate_supplementary_files_graph(self, project: MetadataResource) -> ExperimentGraph:
         """
@@ -78,16 +80,17 @@ class GraphCrawler:
 
         processes_to_crawl = crawl_strategy_func(process_info)
 
-        return reduce(lambda g1, g2: g1.extend(g2),
-                      map(lambda proc: self._crawl(proc, crawl_strategy_func), processes_to_crawl),
-                      partial_graph)
+        return reduce(
+            lambda g1, g2: g1.extend(g2),
+            map(lambda proc: self._crawl(proc, crawl_strategy_func), processes_to_crawl),
+            partial_graph
+        )
 
-    def _crawl_inputs(self, process_info: ProcessInfo) -> ExperimentGraph:
+    def _crawl_inputs(self, process_info: ProcessInfo) -> List[MetadataResource]:
         return GraphCrawler.flatten([self.metadata_service.get_derived_by_processes(i) for i in process_info.inputs])
 
-    def _crawl_outputs(self, process_info: ProcessInfo) -> ExperimentGraph:
+    def _crawl_outputs(self, process_info: ProcessInfo) -> List[MetadataResource]:
         return GraphCrawler.flatten([self.metadata_service.get_input_to_processes(i) for i in process_info.outputs])
-
 
     @staticmethod
     def process_link_for(process_info: ProcessInfo) -> ProcessLink:
@@ -104,8 +107,10 @@ class GraphCrawler:
         for_entity = supplementary_files_info.for_entity
         supplementary_files = [SupplementaryFile(file.concrete_type(), file.uuid) for file in supplementary_files_info.files]
 
-        return SupplementaryFileLink(SupplementedEntity(for_entity.concrete_type(), for_entity.uuid),
-                                     supplementary_files)
+        return SupplementaryFileLink(
+            SupplementedEntity(for_entity.concrete_type(), for_entity.uuid),
+            supplementary_files
+        )
 
     @staticmethod
     def flatten(list_of_lists: Iterable[Iterable]) -> List:
