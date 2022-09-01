@@ -3,20 +3,9 @@ from dataclasses import dataclass
 from typing import List, Set, Dict, Iterable, Any, Union
 
 from exporter.graph.input import Input
+from exporter.graph.output import Output
 from exporter.graph.protocol_link import ProtocolLink
 from exporter.metadata.resource import MetadataResource
-
-
-@dataclass
-class Output:
-    output_type: str
-    output_uuid: str
-
-    def to_dict(self) -> Dict[str, str]:
-        return dict(
-            output_type=self.output_type,
-            output_id=self.output_uuid
-        )
 
 
 class ProcessLink:
