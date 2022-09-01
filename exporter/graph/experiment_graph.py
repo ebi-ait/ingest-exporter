@@ -2,20 +2,9 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Set, Dict, Iterable, Any, Union
 
+from exporter.graph.input import Input
 from exporter.graph.protocol_link import ProtocolLink
 from exporter.metadata.resource import MetadataResource
-
-
-@dataclass
-class Input:
-    input_type: str
-    input_uuid: str
-
-    def to_dict(self) -> Dict[str, str]:
-        return dict(
-            input_type=self.input_type,
-            input_id=self.input_uuid
-        )
 
 
 @dataclass
