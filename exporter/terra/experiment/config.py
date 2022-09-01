@@ -10,7 +10,7 @@ from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
 from exporter.schema.service import SchemaService
-from exporter.terra.builder import ClientBuilder
+from exporter.terra.experiment.client import storage_client_from_gcs_info, TerraStorageClient
 from exporter.terra.experiment.exporter import TerraExperimentExporter
 from exporter.terra.experiment.handler import TerraExperimentHandler
 
@@ -39,9 +39,11 @@ EXPERIMENT_COMPLETE_CONFIG = QueueConfig(
 
 
 def setup_terra_experiment_exporter() -> Thread:
+    rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
+    rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
+    amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
+
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
-    aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
-    aws_access_key_secret = os.environ['AWS_ACCESS_KEY_SECRET']
     gcs_svc_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
     gcp_project = os.environ['GCP_PROJECT']
     terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
@@ -52,19 +54,11 @@ def setup_terra_experiment_exporter() -> Thread:
     metadata_service = MetadataService(ingest_client)
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
-    terra_client = (ClientBuilder()
-                          .with_ingest_client(ingest_client)
-                          .with_schema_service(schema_service)
-                          .with_gcs_info(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix)
-                          .with_gcs_xfer(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix, aws_access_key_id, aws_access_key_secret)
-                          .build())
-
+    gcs_storage = storage_client_from_gcs_info(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix)
+    terra_client = TerraStorageClient(gcs_storage, schema_service)
     ingest_service = IngestService(ingest_client)
-    terra_exporter = TerraExperimentExporter(ingest_client, metadata_service, graph_crawler, terra_client, ingest_service)
+    terra_exporter = TerraExperimentExporter(ingest_service, graph_crawler, terra_client)
 
-    rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
-    rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
-    amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
     handler = TerraExperimentHandler(terra_exporter, ingest_service, EXPERIMENT_COMPLETE_CONFIG)
     listener = QueueListener(EXPERIMENT_QUEUE_CONFIG, handler)
     connector = QueueConnector(amqp_conn_config, listener)

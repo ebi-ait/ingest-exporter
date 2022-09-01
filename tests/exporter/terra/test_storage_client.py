@@ -8,28 +8,28 @@ from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
 from exporter.schema.service import SchemaService
-from exporter.terra.client import TerraClient
+from exporter.terra.experiment.client import TerraStorageClient
 from tests.mocks.files import MockEntityFiles
 
 
 class AbstractFileGenerationBaseTests:
     schema_url = 'not_set'
 
-    def init_terra_client(self) -> TerraClient:
-        terra_client = TerraClient(schema_service=self.schema_service,
-                                         ingest_client=None,
-                                         gcs_storage=None,
-                                         gcs_xfer=None)
-        return terra_client
+    def init_terra_client(self) -> TerraStorageClient:
+        return TerraStorageClient(
+            gcs_storage=None,
+            schema_service=self.schema_service
+        )
 
     def setUp(self) -> None:
         # Setup Entity Files Utility
         self.ingest = self.init_mock_ingest()
         self.schema_service = self.init_schema_service(self.ingest)
-        self.terra_client: TerraClient = self.init_terra_client()
+        self.terra_client: TerraStorageClient = self.init_terra_client()
         self.mock_files = MockEntityFiles(base_uri='http://mock-ingest-api/')
 
-    def init_schema_service(self, mock_ingest_api):
+    @staticmethod
+    def init_schema_service(mock_ingest_api):
         test_ttl_seconds = 3
         test_schema_service = SchemaService(mock_ingest_api, ttl=test_ttl_seconds)
         return test_schema_service

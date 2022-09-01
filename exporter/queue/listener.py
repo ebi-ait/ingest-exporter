@@ -32,4 +32,13 @@ class QueueListener(ConsumerProducerMixin):
         return [experiment_consumer]
 
     def experiment_message_handler(self, body: str, msg: Message):
-        return self.executor.submit(lambda: self.handler.handle_message(body, msg))
+        return self.executor.submit(lambda: self.try_handle_or_reject(body, msg))
+
+    def try_handle_or_reject(self, body: str, msg: Message):
+        self.logger.info(f'Message received: {body}')
+        try:
+            self.handler.handle_message(body, msg)
+        except Exception as e:
+            self.logger.error(f"Rejecting message: {body} due to error: {str(e)}")
+            msg.reject(requeue=False)
+            self.logger.exception(e)

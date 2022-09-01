@@ -7,6 +7,7 @@ import requests
 from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob
+from exporter.metadata.resource import MetadataResource
 
 
 class IngestService:
@@ -49,16 +50,36 @@ class IngestService:
     def get_export_entities_url(self, job_id: str) -> str:
         return self.ingest_client.get_full_url(f'/exportJobs/{job_id}/entities')
 
+    def get_metadata(self, entity_type, uuid) -> MetadataResource:
+        return MetadataResource.from_dict(self.ingest_client.get_entity_by_uuid(entity_type, uuid))
+
+    def get_submission(self, submission_uuid):
+        return self.ingest_client.get_entity_by_uuid('submissionEnvelopes', submission_uuid)
+
+    def project_for_process(self, process: MetadataResource) -> MetadataResource:
+        return MetadataResource.from_dict(list(self.ingest_client.get_related_entities(
+            "projects",
+            process.full_resource,
+            "projects"))[0])
+
     def get_num_complete_entities_for_job(self, job_id: str) -> int:
         entities_url = self.get_export_entities_url(job_id)
         find_entities_by_status_url = f'{entities_url}?status={ExportJobState.EXPORTED.value}'
         return int(self.ingest_client.get(find_entities_by_status_url).json()["page"]["totalElements"])
 
+    # ToDo: Remove this once the exporter does not use it
     def set_data_transfer_complete(self, job_id: str):
         job_url = self.get_job_url(job_id)
         job = self.ingest_client.get(job_url).json()
         context = job["context"]
         context.update({"isDataTransferComplete": True})
+        self.ingest_client.patch(job_url, {"context": context})
+
+    def set_data_file_transfer(self, job_id: str, value: str):
+        job_url = self.get_job_url(job_id)
+        job = self.ingest_client.get(job_url).json()
+        context = job["context"]
+        context.update({"dataFileTransfer": value})
         self.ingest_client.patch(job_url, {"context": context})
 
     def is_data_transfer_complete(self, job_id: str):
