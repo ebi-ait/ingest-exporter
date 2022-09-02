@@ -1,9 +1,5 @@
-import json
 import logging
-from typing import Callable
 
-import polling
-import requests
 from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob
@@ -18,8 +14,10 @@ class IngestService:
     def create_export_entity(self, job_id: str, assay_process_id: str):
         assay_export_entity = ExportEntity(assay_process_id, [])
         create_export_entity_url = self.get_export_entities_url(job_id)
-        requests.post(create_export_entity_url, json.dumps(assay_export_entity.to_dict()),
-                      headers={"Content-type": "application/json"}, json=True).raise_for_status()
+        self.ingest_client.post(
+            create_export_entity_url,
+            json=assay_export_entity.to_dict()
+        )
         self._maybe_complete_job(job_id)
 
     def _maybe_complete_job(self, job_id):
@@ -35,7 +33,7 @@ class IngestService:
 
     def complete_job(self, job_id: str):
         job_url = self.get_job_url(job_id)
-        self.ingest_client.patch(job_url, {"status": ExportJobState.EXPORTED.value})
+        self.ingest_client.patch(job_url, json={"status": ExportJobState.EXPORTED.value})
 
     def get_job_state(self, job_id: str) -> ExportJobState:
         return self.get_job(job_id).export_state
@@ -67,31 +65,6 @@ class IngestService:
         find_entities_by_status_url = f'{entities_url}?status={ExportJobState.EXPORTED.value}'
         return int(self.ingest_client.get(find_entities_by_status_url).json()["page"]["totalElements"])
 
-    # ToDo: Remove this once the exporter does not use it
-    def set_data_transfer_complete(self, job_id: str):
-        job_url = self.get_job_url(job_id)
-        job = self.ingest_client.get(job_url).json()
-        context = job["context"]
-        context.update({"isDataTransferComplete": True})
-        self.ingest_client.patch(job_url, {"context": context})
-
     def set_data_file_transfer(self, job_id: str, value: str):
         job_url = self.get_job_url(job_id)
-        job = self.ingest_client.get(job_url).json()
-        context = job["context"]
-        context.update({"dataFileTransfer": value})
-        self.ingest_client.patch(job_url, {"context": context})
-
-    def is_data_transfer_complete(self, job_id: str):
-        return self.get_job(job_id).is_data_transfer_complete
-
-    def wait_for_data_transfer_to_complete(self, job_id: str, compute_wait_time: Callable, start_wait_time_sec, max_wait_time_sec: int):
-        try:
-            polling.poll(
-                lambda: self.is_data_transfer_complete(job_id),
-                step=start_wait_time_sec,
-                step_function=compute_wait_time,
-                timeout=max_wait_time_sec
-            )
-        except polling.TimeoutException as te:
-            raise
+        self.ingest_client.patch(f'{job_url}/context', json={"dataFileTransfer": value})

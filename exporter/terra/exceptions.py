@@ -8,3 +8,7 @@ class UploadPollingException(Exception):
 
 class ExperimentMessageParseException(Exception):
     pass
+
+
+class SubmissionDoesNotHaveRequiredAction(Exception):
+    pass

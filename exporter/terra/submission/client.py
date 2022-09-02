@@ -1,9 +1,10 @@
 import json
-from typing import Dict, Tuple, Callable
+from typing import Dict, Tuple
 
 from google.oauth2.service_account import Credentials
 
-from exporter.terra.gcs.transfer import TransferJobSpec, GcsTransfer
+from exporter.terra.gcs.transfer import GcsTransfer
+from exporter.terra.gcs.transfer_job import TransferJob
 
 
 def transfer_client_from_gcs_info(
@@ -31,14 +32,11 @@ class TerraTransferClient:
     def __init__(self, gcs_xfer: GcsTransfer):
         self.gcs_xfer = gcs_xfer
 
-    def transfer_data_files(self, submission: Dict, project_uuid, export_job_id: str) -> (TransferJobSpec, bool):
+    def transfer_data_files(self, submission: Dict, project_uuid, export_job_id: str) -> (TransferJob, bool):
         upload_area = submission["stagingDetails"]["stagingAreaLocation"]["value"]
         bucket_and_key = self.bucket_and_key_for_upload_area(upload_area)
-        transfer_job_spec, success = self.gcs_xfer.transfer_upload_area(bucket_and_key[0], bucket_and_key[1], project_uuid, export_job_id)
-        return transfer_job_spec, success
-
-    def wait_for_transfer_to_complete(self, job_name: str, compute_wait_time_sec:Callable, start_wait_time_sec: int, max_wait_time_sec: int):
-        self.gcs_xfer.wait_for_job_to_complete(job_name, compute_wait_time_sec, start_wait_time_sec, max_wait_time_sec)
+        transfer_job_spec = self.gcs_xfer.transfer_upload_area(bucket_and_key[0], bucket_and_key[1], project_uuid, export_job_id)
+        return transfer_job_spec
 
     @staticmethod
     def bucket_and_key_for_upload_area(upload_area: str) -> Tuple[str, str]:
