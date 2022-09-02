@@ -19,7 +19,6 @@ class GcsStorage:
         self.storage_prefix = storage_prefix
 
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
 
     def file_exists(self, object_key: str) -> bool:
         dest_key = f'{self.storage_prefix}/{object_key}'

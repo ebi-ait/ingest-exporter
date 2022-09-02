@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 
 from kombu import Message
@@ -33,7 +34,7 @@ class TerraMessageHandlerTest(TestCase):
 
     def test_success(self):
         # Given
-        body = '{"documentId": "D", "documentUuid": "P", "envelopeUuid": "S", "index": 0, "total": 1, "exportJobId": "E"}'
+        body = json.loads('{"documentId": "D", "documentUuid": "P", "envelopeUuid": "S", "index": 0, "total": 1, "exportJobId": "E"}')
         message = MagicMock(spec=Message)
         message.ack = MagicMock()
 

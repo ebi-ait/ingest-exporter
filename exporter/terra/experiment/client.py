@@ -17,6 +17,8 @@ from exporter.schema.service import SchemaService
 from exporter.terra.gcs.storage import Streamable, GcsStorage
 from exporter.utils import log_function_and_params
 
+LOGGER_NAME = 'TerraExperimentExporter'
+
 
 def storage_client_from_gcs_info(
         service_account_credentials_path: str,
@@ -35,15 +37,14 @@ class TerraStorageClient:
     def __init__(self, gcs_storage: GcsStorage, schema_service: SchemaService):
         self.gcs_storage = gcs_storage
         self.schema_service = schema_service
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
+        self.logger = logging.getLogger(LOGGER_NAME)
 
-    @log_function_and_params(logging.getLogger(__name__))
+    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_metadatas(self, metadatas: Iterable[MetadataResource], project_uuid: str):
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
 
-    @log_function_and_params(logging.getLogger(__name__))
+    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_metadata(self, metadata: MetadataResource, project_uuid: str):
         # TODO1: only proceed if lastContentModified > last
         dest_object_key = f'{project_uuid}/metadata/{metadata.concrete_type()}/{metadata.uuid}_{metadata.dcp_version}.json'
@@ -66,7 +67,7 @@ class TerraStorageClient:
         data_stream = self.dict_to_json_stream(links_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
-    @log_function_and_params(logging.getLogger(__name__))
+    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
         file_descriptor_json = self.generate_file_descriptor_json(file_metadata)

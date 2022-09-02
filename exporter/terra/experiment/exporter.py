@@ -19,7 +19,6 @@ class TerraExperimentExporter:
         self.terra_client = terra_client
         self.ingest_service = ingest_service
         self.logger = logging.getLogger(LOGGER_NAME)
-        self.logger.setLevel(logging.INFO)
 
     @utils.exec_time(logging.getLogger(LOGGER_NAME), logging.INFO)
     def export(self, process_uuid):

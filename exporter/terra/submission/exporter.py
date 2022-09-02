@@ -8,8 +8,7 @@ class TerraSubmissionExporter:
     def __init__(self, ingest_service: IngestService, terra_client: TerraTransferClient):
         self.ingest_service = ingest_service
         self.terra_client = terra_client
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
+        self.logger = logging.getLogger('TerraSubmissionExporter')
 
     def start_data_file_transfer(self, job_id: str, submission_uuid: str, project_uuid: str):
         self.logger.info(f"data sync starting")

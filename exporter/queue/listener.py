@@ -1,4 +1,4 @@
-import logging
+import json
 from concurrent.futures import ThreadPoolExecutor
 from typing import Type, List
 
@@ -16,9 +16,6 @@ class QueueListener(ConsumerProducerMixin):
         self.handler = handler
         self.executor = executor if executor else ThreadPoolExecutor()
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-
     def add_connection(self, connection: Connection):
         self.connection = connection
         self.handler.add_producer(self.producer)
@@ -35,10 +32,12 @@ class QueueListener(ConsumerProducerMixin):
         return self.executor.submit(lambda: self.try_handle_or_reject(body, msg))
 
     def try_handle_or_reject(self, body: str, msg: Message):
-        self.logger.info(f'Message received: {body}')
-        try:
-            self.handler.handle_message(body, msg)
-        except Exception as e:
-            self.logger.error(f"Rejecting message: {body} due to error: {str(e)}")
-            msg.reject(requeue=False)
-            self.logger.exception(e)
+        json_body: dict = json.loads(body)
+        with self.handler.set_context(json_body) as s:
+            s.logger.info(f'Message received')
+            try:
+                self.handler.handle_message(json_body, msg)
+            except Exception as e:
+                s.logger.error(f"Rejecting message: {body} due to error: {str(e)}")
+                msg.reject(requeue=False)
+                s.logger.exception(e)
