@@ -2,8 +2,9 @@ hca-ingest>=2.3.0
 requests
 kombu
 jsonschema
-google-cloud-storage
 cachetools
 google-api-python-client
+google-cloud-storage
+google-cloud-pubsub
 polling
 packaging
