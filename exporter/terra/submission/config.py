@@ -7,7 +7,7 @@ from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
-from exporter.terra.submission.client import TerraTransferClient, transfer_client_from_gcs_info
+from exporter.terra.submission.client import TerraTransferClient
 from exporter.terra.submission.exporter import TerraSubmissionExporter
 from exporter.terra.submission.handler import TerraSubmissionHandler
 
@@ -37,15 +37,14 @@ def setup_terra_submissions_exporter() -> Thread:
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
     aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
     aws_access_key_secret = os.environ['AWS_ACCESS_KEY_SECRET']
-    gcs_svc_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
+    gcs_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
     gcp_project = os.environ['GCP_PROJECT']
     terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
     terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
 
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
-    gcs_transfer = transfer_client_from_gcs_info(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix, aws_access_key_id, aws_access_key_secret)
-    terra_client = TerraTransferClient(gcs_transfer)
+    terra_client = TerraTransferClient(aws_access_key_id, aws_access_key_secret, gcp_project, terra_bucket_name, terra_bucket_prefix, gcs_credentials_path)
     terra_exporter = TerraSubmissionExporter(ingest_service, terra_client)
 
     handler = TerraSubmissionHandler(terra_exporter, ingest_service)

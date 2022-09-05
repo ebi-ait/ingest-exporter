@@ -4,3 +4,7 @@ class FileTransferCouldNotStart(Exception):
 
 class FileTransferAlreadyExists(Exception):
     pass
+
+
+class TransferOperationsParseError(Exception):
+    pass
