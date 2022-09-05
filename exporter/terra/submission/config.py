@@ -1,5 +1,6 @@
 import os
 from threading import Thread
+from typing import Tuple
 
 from hca_ingest.api.ingestapi import IngestApi
 
@@ -10,6 +11,7 @@ from exporter.queue.listener import QueueListener
 from exporter.terra.submission.client import TerraTransferClient
 from exporter.terra.submission.exporter import TerraSubmissionExporter
 from exporter.terra.submission.handler import TerraSubmissionHandler
+from exporter.terra.submission.responder import TerraTransferResponder
 
 EXCHANGE = 'ingest.exporter.exchange'
 RETRY_POLICY = {
@@ -29,7 +31,7 @@ SUBMISSION_QUEUE_CONFIG = QueueConfig(
 )
 
 
-def setup_terra_submissions_exporter() -> Thread:
+def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
@@ -38,13 +40,14 @@ def setup_terra_submissions_exporter() -> Thread:
     aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
     aws_access_key_secret = os.environ['AWS_ACCESS_KEY_SECRET']
     gcs_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
-    gcp_project = os.environ['GCP_PROJECT']
+    gcs_project = os.environ['GCP_PROJECT']
+    gcs_notification_topic = "FinishedTransferJobs"
     terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
     terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
 
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
-    terra_client = TerraTransferClient(aws_access_key_id, aws_access_key_secret, gcp_project, terra_bucket_name, terra_bucket_prefix, gcs_credentials_path)
+    terra_client = TerraTransferClient(aws_access_key_id, aws_access_key_secret, gcs_project, terra_bucket_name, terra_bucket_prefix, gcs_notification_topic, gcs_credentials_path)
     terra_exporter = TerraSubmissionExporter(ingest_service, terra_client)
 
     handler = TerraSubmissionHandler(terra_exporter, ingest_service)
@@ -54,4 +57,8 @@ def setup_terra_submissions_exporter() -> Thread:
     terra_exporter_listener_process = Thread(target=lambda: connector.run())
     terra_exporter_listener_process.start()
 
-    return terra_exporter_listener_process
+    terra_responder = TerraTransferResponder(ingest_service, gcs_project, gcs_notification_topic, gcs_credentials_path)
+    terra_transfer_complete_listener = Thread(target=lambda: terra_responder.listen())
+    terra_transfer_complete_listener.start()
+
+    return terra_exporter_listener_process, terra_transfer_complete_listener

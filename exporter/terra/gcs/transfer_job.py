@@ -14,6 +14,7 @@ class TransferJob:
     aws_access_key_secret: str
     dest_bucket: str
     dest_path: str
+    notification_topic: str
 
     def to_dict(self) -> Dict:
         start_date = datetime.now()
@@ -50,5 +51,10 @@ class TransferJob:
                 'transferOptions': {
                     'overwriteObjectsAlreadyExistingInSink': False
                 }
+            },
+            'notificationConfig': {
+                'pubsubTopic': f'projects/{self.project_id}/topics/{self.notification_topic}',
+                'eventTypes': ['TRANSFER_OPERATION_SUCCESS'],
+                'payloadFormat': 'JSON'
             }
         }

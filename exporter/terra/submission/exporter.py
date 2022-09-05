@@ -18,8 +18,4 @@ class TerraSubmissionExporter:
             self.logger.error("The export data flag has not been set!")
             raise SubmissionDoesNotHaveRequiredAction()
         self.logger.info(f"Starting data transfer")
-        self.terra_client.transfer_data_files(
-            submission,
-            project_uuid,
-            job_id
-        )
+        self.terra_client.transfer_data_files(submission, project_uuid, job_id)
