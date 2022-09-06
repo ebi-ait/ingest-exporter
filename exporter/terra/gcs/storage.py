@@ -1,4 +1,3 @@
-import logging
 from io import BufferedReader, StringIO
 from time import sleep
 from typing import Union, IO, Any
@@ -7,6 +6,7 @@ from google.api_core import retry
 from google.api_core.exceptions import PreconditionFailed, ServiceUnavailable
 from google.cloud.storage import Client, Blob, Bucket
 
+from exporter.session_context import SessionContext
 from exporter.terra.exceptions import UploadPollingException
 
 Streamable = Union[BufferedReader, StringIO, IO[Any]]
@@ -18,7 +18,7 @@ class GcsStorage:
         self.bucket_name = bucket_name
         self.storage_prefix = storage_prefix
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = SessionContext.register_logger(__name__)
 
     def file_exists(self, object_key: str) -> bool:
         dest_key = f'{self.storage_prefix}/{object_key}'

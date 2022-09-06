@@ -1,15 +1,14 @@
-import logging
-
 from hca_ingest.api.ingestapi import IngestApi
 
 from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob
 from exporter.metadata.resource import MetadataResource
+from exporter.session_context import SessionContext
 
 
 class IngestService:
     def __init__(self, ingest_client: IngestApi):
         self.ingest_client = ingest_client
-        self.logger = logging.getLogger(__name__)
+        self.logger = SessionContext.register_logger(__name__)
 
     def create_export_entity(self, job_id: str, assay_process_id: str):
         assay_export_entity = ExportEntity(assay_process_id, [])
