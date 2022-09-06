@@ -10,9 +10,10 @@ from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
 from exporter.schema.service import SchemaService
-from exporter.terra.experiment.client import storage_client_from_gcs_info, TerraStorageClient
+from exporter.terra.experiment.client import TerraStorageClient
 from exporter.terra.experiment.exporter import TerraExperimentExporter
 from exporter.terra.experiment.handler import TerraExperimentHandler
+from exporter.terra.gcs.storage import GcsStorage
 
 EXCHANGE = 'ingest.exporter.exchange'
 RETRY_POLICY = {
@@ -54,8 +55,9 @@ def setup_terra_experiment_exporter() -> Thread:
     metadata_service = MetadataService(ingest_client)
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
-    gcs_storage = storage_client_from_gcs_info(gcs_svc_credentials_path, gcp_project, terra_bucket_name, terra_bucket_prefix)
-    terra_client = TerraStorageClient(gcs_storage, schema_service)
+
+    gcs_storage = GcsStorage(gcp_project, gcs_svc_credentials_path)
+    terra_client = TerraStorageClient(gcs_storage, schema_service, terra_bucket_name, terra_bucket_prefix)
     ingest_service = IngestService(ingest_client)
     terra_exporter = TerraExperimentExporter(ingest_service, graph_crawler, terra_client)
 

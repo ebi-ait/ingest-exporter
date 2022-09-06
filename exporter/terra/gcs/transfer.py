@@ -14,8 +14,10 @@ from .transfer_job import TransferJob
 
 
 class GcsTransfer:
-    def __init__(self, credentials: Credentials):
-        self.credentials = credentials
+    def __init__(self, credentials_path: str):
+        with open(credentials_path) as source:
+            credentials_file = json.load(source)
+        self.credentials = Credentials.from_service_account_info(credentials_file)
 
     def start_job(self, transfer_job: TransferJob):
         with self.create_transfer_client(self.credentials) as client:

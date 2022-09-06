@@ -17,8 +17,9 @@ class AbstractFileGenerationBaseTests:
 
     def init_terra_client(self) -> TerraStorageClient:
         return TerraStorageClient(
-            gcs_storage=None,
-            schema_service=self.schema_service
+            gcs_storage=MagicMock(),
+            schema_service=self.schema_service,
+            bucket_name=""
         )
 
     def setUp(self) -> None:

@@ -1,24 +1,18 @@
-import json
 from typing import Dict, Tuple
-
-from google.oauth2.service_account import Credentials
 
 from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.gcs.transfer_job import TransferJob
 
 
 class TerraTransferClient:
-    def __init__(self, aws_access_key_id: str, aws_access_key_secret: str, gcs_project_id: str, gcs_dest_bucket: str, gcs_dest_prefix: str, notification_topic: str, credentials_path: str):
+    def __init__(self, gcs_transfer: GcsTransfer, aws_access_key_id: str, aws_access_key_secret: str, gcs_project_id: str, gcs_dest_bucket: str, gcs_dest_prefix: str, notification_topic: str):
+        self.gcs_transfer = gcs_transfer
         self.aws_access_key_id = aws_access_key_id
         self.aws_access_key_secret = aws_access_key_secret
         self.gcs_project_id = gcs_project_id
         self.gcs_dest_bucket = gcs_dest_bucket
         self.gcs_bucket_prefix = gcs_dest_prefix
         self.notification_topic = notification_topic
-        with open(credentials_path) as source:
-            credentials_file = json.load(source)
-        credentials = Credentials.from_service_account_info(credentials_file)
-        self.gcs_transfer = GcsTransfer(credentials)
 
     def transfer_data_files(self, submission: Dict, project_uuid, export_job_id: str):
         upload_area = submission["stagingDetails"]["stagingAreaLocation"]["value"]

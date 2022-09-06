@@ -8,6 +8,7 @@ from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
+from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.submission.client import TerraTransferClient
 from exporter.terra.submission.exporter import TerraSubmissionExporter
 from exporter.terra.submission.handler import TerraSubmissionHandler
@@ -47,7 +48,8 @@ def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
 
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
-    terra_client = TerraTransferClient(aws_access_key_id, aws_access_key_secret, gcs_project, terra_bucket_name, terra_bucket_prefix, gcs_notification_topic, gcs_credentials_path)
+    gcs_transfer = GcsTransfer(gcs_credentials_path)
+    terra_client = TerraTransferClient(gcs_transfer, aws_access_key_id, aws_access_key_secret, gcs_project, terra_bucket_name, terra_bucket_prefix, gcs_notification_topic)
     terra_exporter = TerraSubmissionExporter(ingest_service, terra_client)
 
     handler = TerraSubmissionHandler(terra_exporter, ingest_service)

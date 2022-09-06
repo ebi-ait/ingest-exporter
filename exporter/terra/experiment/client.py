@@ -4,8 +4,6 @@ from io import StringIO
 from typing import Iterable, Dict, Tuple
 
 import requests
-from google.cloud.storage import Client
-from google.oauth2.service_account import Credentials
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
@@ -20,23 +18,13 @@ from exporter.utils import log_function_and_params
 LOGGER_NAME = 'TerraExperimentExporter'
 
 
-def storage_client_from_gcs_info(
-        service_account_credentials_path: str,
-        gcp_project: str,
-        bucket_name: str,
-        bucket_prefix: str
-):
-    with open(service_account_credentials_path) as source:
-        info = json.load(source)
-    storage_credentials: Credentials = Credentials.from_service_account_info(info)
-    gcs_client = Client(project=gcp_project, credentials=storage_credentials)
-    return GcsStorage(gcs_client, bucket_name, bucket_prefix)
-
-
 class TerraStorageClient:
-    def __init__(self, gcs_storage: GcsStorage, schema_service: SchemaService):
+    def __init__(self, gcs_storage: GcsStorage, schema_service: SchemaService, bucket_name: str,
+                 key_prefix: str = ''):
         self.gcs_storage = gcs_storage
         self.schema_service = schema_service
+        self.bucket_name = bucket_name
+        self.key_prefix = key_prefix
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @log_function_and_params(logging.getLogger(LOGGER_NAME))
@@ -54,8 +42,8 @@ class TerraStorageClient:
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
         # TODO2: patch dcpVersion        
-        #patch_url = metadata.metadata_json['_links']['self']['href']
-        #self.ingest_client.patch(patch_url, {"dcpVersion": metadata.dcp_version})
+        # patch_url = metadata.metadata_json['_links']['self']['href']
+        # self.ingest_client.patch(patch_url, {"dcpVersion": metadata.dcp_version})
 
         self.logger.info(f'Writing metadata for type: {metadata.metadata_type}')
         if metadata.metadata_type == "file":
@@ -71,8 +59,10 @@ class TerraStorageClient:
     def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
         file_descriptor_json = self.generate_file_descriptor_json(file_metadata)
-        self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}, '
-                         f'projectUuid: {project_uuid}')
+        self.logger.info(
+            f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}, '
+            f'projectUuid: {project_uuid}'
+        )
         data_stream = self.dict_to_json_stream(file_descriptor_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
@@ -85,7 +75,7 @@ class TerraStorageClient:
         return json_doc
 
     def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
-        self.gcs_storage.write(object_key, data_stream)
+        self.gcs_storage.write(self.bucket_name, f"{self.key_prefix}/{object_key}", data_stream)
 
     def generate_links_json(self, link_set: LinkSet) -> Dict:
         json_doc = link_set.to_dict()
@@ -118,4 +108,5 @@ class TerraStorageClient:
         try:
             validate(instance=json_doc, schema=json_schema)
         except ValidationError as e:
-            raise MetadataParseException(f'problem validating document {json_doc} with schema: {json_doc["describedBy"]}', e)
+            raise MetadataParseException(
+                f'problem validating document {json_doc} with schema: {json_doc["describedBy"]}', e)
