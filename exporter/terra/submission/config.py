@@ -40,16 +40,17 @@ def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
     aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
     aws_access_key_secret = os.environ['AWS_ACCESS_KEY_SECRET']
-    gcs_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
-    gcs_project = os.environ['GCP_PROJECT']
-    gcs_notification_topic = "FinishedTransferJobs"
+    gcp_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
+    gcp_project = os.environ['GCP_PROJECT']
+    gcp_topic = os.environ['GCP_TRANSFER_TOPIC']
+
     terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
     terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
 
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
-    gcs_transfer = GcsTransfer(gcs_credentials_path)
-    terra_client = TerraTransferClient(gcs_transfer, aws_access_key_id, aws_access_key_secret, gcs_project, terra_bucket_name, terra_bucket_prefix, gcs_notification_topic)
+    gcs_transfer = GcsTransfer(gcp_credentials_path)
+    terra_client = TerraTransferClient(gcs_transfer, aws_access_key_id, aws_access_key_secret, gcp_project, terra_bucket_name, terra_bucket_prefix, gcp_topic)
     terra_exporter = TerraSubmissionExporter(ingest_service, terra_client)
 
     handler = TerraSubmissionHandler(terra_exporter, ingest_service)
@@ -59,7 +60,7 @@ def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
     terra_exporter_listener_process = Thread(target=lambda: connector.run())
     terra_exporter_listener_process.start()
 
-    terra_responder = TerraTransferResponder(ingest_service, gcs_project, gcs_notification_topic, gcs_credentials_path)
+    terra_responder = TerraTransferResponder(ingest_service, gcp_project, gcp_topic, gcp_credentials_path)
     terra_transfer_complete_listener = Thread(target=lambda: terra_responder.listen())
     terra_transfer_complete_listener.start()
 

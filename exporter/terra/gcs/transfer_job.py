@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict
 
+from google.cloud.pubsub_v1 import SubscriberClient
+
 
 @dataclass
 class TransferJob:
@@ -15,6 +17,9 @@ class TransferJob:
     dest_bucket: str
     dest_path: str
     notification_topic: str
+
+    def __post_init__(self):
+        self.notification_topic = SubscriberClient.topic_path(self.project_id, self.notification_topic)
 
     def to_dict(self) -> Dict:
         start_date = datetime.now()
@@ -53,7 +58,7 @@ class TransferJob:
                 }
             },
             'notificationConfig': {
-                'pubsubTopic': f'projects/{self.project_id}/topics/{self.notification_topic}',
+                'pubsubTopic': self.notification_topic,
                 'eventTypes': ['TRANSFER_OPERATION_SUCCESS'],
                 'payloadFormat': 'JSON'
             }

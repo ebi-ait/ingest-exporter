@@ -9,13 +9,13 @@ from exporter.session_context import SessionContext
 
 
 class TerraTransferResponder:
-    def __init__(self, ingest_service: IngestService, gcs_project_id: str, gcs_topic: str, gcs_credentials_path: str):
+    def __init__(self, ingest_service: IngestService, gcp_project_id: str, gcp_topic: str, gcp_credentials_path: str):
         self.ingest = ingest_service
-        self.project_id = gcs_project_id
-        self.topic = gcs_topic
+        self.project_id = gcp_project_id
+        self.topic = gcp_topic
         self.logger = SessionContext.register_logger(__name__)
 
-        with open(gcs_credentials_path) as source:
+        with open(gcp_credentials_path) as source:
             credentials_file = json.load(source)
         credentials = Credentials.from_service_account_info(credentials_file)
         subscriber = SubscriberClient(credentials=credentials)
