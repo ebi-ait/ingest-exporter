@@ -42,7 +42,7 @@ def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
     aws_access_key_secret = os.environ['AWS_ACCESS_KEY_SECRET']
     gcp_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
     gcp_project = os.environ['GCP_PROJECT']
-    gcp_topic = os.environ['GCP_TRANSFER_TOPIC']
+    gcp_topic = os.environ['TERRA_GCS_NOTIFICATION_TOPIC']
 
     terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
     terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
