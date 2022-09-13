@@ -3,6 +3,7 @@ from kombu import Message
 from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig
 from exporter.queue.handler import MessageHandler
+from exporter.session_context import SessionContext
 from exporter.terra.experiment.exporter import TerraExperimentExporter
 from exporter.terra.experiment.message import ExperimentMessage
 
@@ -18,6 +19,16 @@ class TerraExperimentHandler(MessageHandler):
         self.experiment_exporter = experiment_exporter
         self.ingest_service = ingest_service
         self.publish_queue = publish_queue_config
+
+    def set_context(self, body: dict) -> SessionContext:
+        return SessionContext(
+            logger=self.logger,
+            context={
+                'submission_uuid': body.get('envelopeUuid'),
+                'export_job_id': body.get('exportJobId'),
+                'project_uuid': body.get('projectUuid')
+            }
+        )
 
     def handle_message(self, body: dict, msg: Message):
         exp = ExperimentMessage.from_dict(body)

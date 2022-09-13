@@ -5,7 +5,7 @@ from exporter.graph.crawler import GraphCrawler
 from exporter.ingest.service import IngestService
 from exporter.terra.experiment.client import TerraStorageClient
 
-LOGGER_NAME = __name__
+LOGGER_NAME = 'TerraExperimentExporter'
 
 
 class TerraExperimentExporter:

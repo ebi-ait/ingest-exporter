@@ -11,13 +11,7 @@ class MessageHandler(ABC):
         self.producer = None
 
     def set_context(self, body: dict) -> SessionContext:
-        return SessionContext(
-            logger=self.logger,
-            context={
-                'submission_uuid': body.get('submissionUuid'),
-                'export_job_id': body.get('exportJobId')
-            }
-        )
+        pass
 
     def handle_message(self, body: dict, msg: Message):
         pass

@@ -1,4 +1,5 @@
 import json
+from logging import Logger
 
 from google.api_core.exceptions import AlreadyExists
 from google.cloud.pubsub_v1 import SubscriberClient
@@ -22,10 +23,11 @@ class TerraTransferResponder:
         with SubscriberClient(credentials=self.credentials) as subscriber:
             try:
                 subscriber.create_subscription(name=self.subscription_path, topic=self.topic_path)
+                self.logger.info(f'Subscription Created: {self.subscription_path}')
             except AlreadyExists:
-                self.logger.info(f'Congratulations! Subscription Exists: {self.subscription_path}')
+                self.logger.info(f'Subscription Found: {self.subscription_path}')
             except Exception as e:
-                self.logger.error(f'Error checking whether subscription exists: {self.subscription_path}, {e}')
+                self.logger.info(f'Cannot check whether subscription exists: {self.subscription_path} due to {e}')
 
     def listen(self):
         with SubscriberClient(credentials=self.credentials) as subscriber:
@@ -43,6 +45,14 @@ class TerraTransferResponder:
         if not transfer_name.startswith('transferJobs/'):
             message.nack()
         export_job_id = transfer_name.replace('transferJobs/', '')
-        self.logger.info(f'Received message from google that data transfer for export job {export_job_id} is finished.')
+        with SessionContext(
+            logger=self.logger,
+            context={'export_job_id': export_job_id}
+        ) as context:
+            self.hande_data_transfer_complete(context.logger, message, export_job_id)
+
+    def hande_data_transfer_complete(self, logger: Logger, message: Message, export_job_id: str):
+        logger.info(f'Received message that data transfer is complete, informing ingest')
         self.ingest.set_data_file_transfer(export_job_id, 'COMPLETE')
+        logger.info(f'Acknowledging data transfer complete message')
         message.ack()
