@@ -22,10 +22,10 @@ class TestTerraSubmissionExporter(unittest.TestCase):
                 }
             }
         }
+        self.mock_ingest_get = MagicMock()
+        self.mock_ingest_get.return_value = self.mock_submission
         self.mock_ingest = MagicMock(spec=IngestService)
-        self.mock_ingest.get_submission = MagicMock()
-        self.mock_ingest.get_submission.return_value = self.mock_submission
-        self.mock_ingest.set_data_file_transfer = MagicMock()
+        self.mock_ingest.get_submission = self.mock_ingest_get
 
         self.mock_terra_transfer = MagicMock()
         mock_terra = MagicMock(spec=TerraTransferClient)
@@ -43,7 +43,7 @@ class TestTerraSubmissionExporter(unittest.TestCase):
         self.exporter.start_data_file_transfer(export_id, submission_uuid, project_uuid)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with(submission_uuid)
+        self.mock_ingest_get.assert_called_once_with(submission_uuid)
         self.mock_terra_transfer.assert_called_once_with(self.upload_area, project_uuid, export_id)
 
     def test_exporter_no_submission(self):
@@ -58,7 +58,7 @@ class TestTerraSubmissionExporter(unittest.TestCase):
             self.exporter.start_data_file_transfer(export_id, submission_uuid, project_uuid)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with(submission_uuid)
+        self.mock_ingest_get.assert_called_once_with(submission_uuid)
         self.mock_terra_transfer.assert_not_called()
 
     def test_exporter_missing_submit_action(self):
@@ -73,7 +73,7 @@ class TestTerraSubmissionExporter(unittest.TestCase):
             self.exporter.start_data_file_transfer(export_id, submission_uuid, project_uuid)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with(submission_uuid)
+        self.mock_ingest_get.assert_called_once_with(submission_uuid)
         self.mock_terra_transfer.assert_not_called()
 
     def test_exporter_missing_staging_area(self):
@@ -88,5 +88,5 @@ class TestTerraSubmissionExporter(unittest.TestCase):
             self.exporter.start_data_file_transfer(export_id, submission_uuid, project_uuid)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with(submission_uuid)
+        self.mock_ingest_get.assert_called_once_with(submission_uuid)
         self.mock_terra_transfer.assert_not_called()

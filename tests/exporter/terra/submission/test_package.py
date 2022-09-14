@@ -23,28 +23,33 @@ class TestTerraSubmissionExporterPackage(TestCase):
                 }
             }
         }
-        self.mock_ingest = MagicMock(spec=IngestService)
-        self.mock_ingest.get_submission = MagicMock()
-        self.mock_ingest.get_submission.return_value = self.mock_submission
-        self.mock_ingest.set_data_file_transfer = MagicMock()
+        self.mock_ingest_get = MagicMock()
+        self.mock_ingest_get.return_value = self.mock_submission
+        self.mock_ingest_set = MagicMock()
+        mock_ingest = MagicMock(spec=IngestService)
+        mock_ingest.get_submission = self.mock_ingest_get
+        mock_ingest.set_data_file_transfer = self.mock_ingest_set
 
         self.producer = MagicMock()
         self.producer.publish = MagicMock()
-        self.mock_gcs = MagicMock(spec=GcsTransfer)
-        self.mock_gcs.start_job = MagicMock()
+        self.mock_gcs_start = MagicMock()
+        mock_gcs = MagicMock(spec=GcsTransfer)
+        mock_gcs.start_job = self.mock_gcs_start
 
-        terra = TerraTransferClient(self.mock_gcs, 'aws_id', 'aws_secret', 'gcs_project', 'gcs_bucket', 'prefix', 'topic')
-        exporter = TerraSubmissionExporter(self.mock_ingest, terra)
+        terra = TerraTransferClient(mock_gcs, 'aws_id', 'aws_secret', 'gcs_project', 'gcs_bucket', 'prefix', 'topic')
+        exporter = TerraSubmissionExporter(mock_ingest, terra)
 
         handler = TerraSubmissionHandler(
             exporter,
-            self.mock_ingest
+            mock_ingest
         )
         self.listener = QueueListener(MagicMock(), handler, MagicMock())
 
+        self.msg_ack = MagicMock()
+        self.msg_reject = MagicMock()
         self.message = MagicMock(spec=Message)
-        self.message.ack = MagicMock()
-        self.message.reject = MagicMock()
+        self.message.ack = self.msg_ack
+        self.message.reject = self.msg_reject
 
     def test_package_success(self):
         # Given
@@ -65,10 +70,10 @@ class TestTerraSubmissionExporterPackage(TestCase):
         self.listener.try_handle_or_reject(body, self.message)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with("submissionUuid")
-        self.mock_gcs.start_job.assert_called_once_with(test_job)
-        self.mock_ingest.set_data_file_transfer.assert_called_once_with("exportJobId", "STARTED")
-        self.message.ack.assert_called_once()
+        self.mock_ingest_get.assert_called_once_with("submissionUuid")
+        self.mock_gcs_start.assert_called_once_with(test_job)
+        self.mock_ingest_set.assert_called_once_with("exportJobId", "STARTED")
+        self.msg_ack.assert_called_once()
 
     def test_missing_submit_action(self):
         # Given
@@ -79,10 +84,10 @@ class TestTerraSubmissionExporterPackage(TestCase):
         self.listener.try_handle_or_reject(body, self.message)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with("submissionUuid")
-        self.mock_gcs.start_job.assert_not_called()
-        self.mock_ingest.set_data_file_transfer.assert_not_called()
-        self.message.reject.assert_called_once_with(requeue=False)
+        self.mock_ingest_get.assert_called_once_with("submissionUuid")
+        self.mock_gcs_start.assert_not_called()
+        self.mock_ingest_set.assert_not_called()
+        self.msg_reject.assert_called_once_with(requeue=False)
 
     def test_missing_staging_area(self):
         # Given
@@ -93,20 +98,20 @@ class TestTerraSubmissionExporterPackage(TestCase):
         self.listener.try_handle_or_reject(body, self.message)
 
         # Then
-        self.mock_ingest.get_submission.assert_called_once_with("submissionUuid")
-        self.mock_gcs.start_job.assert_not_called()
-        self.mock_ingest.set_data_file_transfer.assert_not_called()
-        self.message.reject.assert_called_once_with(requeue=False)
+        self.mock_ingest_get.assert_called_once_with("submissionUuid")
+        self.mock_gcs_start.assert_not_called()
+        self.mock_ingest_set.assert_not_called()
+        self.msg_reject.assert_called_once_with(requeue=False)
 
     def test_unexpected_failure(self):
         # Given
         body = '{}'
-        self.mock_gcs.start_job.side_effect = FileTransferCouldNotStart()
+        self.mock_gcs_start.side_effect = FileTransferCouldNotStart()
 
         # When
         self.listener.try_handle_or_reject(body, self.message)
 
         # Then
-        self.mock_gcs.start_job.assert_called_once()
-        self.mock_ingest.set_data_file_transfer.assert_not_called()
-        self.message.reject.assert_called_once_with(requeue=False)
+        self.mock_gcs_start.assert_called_once()
+        self.mock_ingest_set.assert_not_called()
+        self.msg_reject.assert_called_once_with(requeue=False)
