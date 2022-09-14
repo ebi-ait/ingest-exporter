@@ -70,9 +70,23 @@ class TestTerraSubmissionExporterPackage(TestCase):
         self.mock_ingest.set_data_file_transfer.assert_called_once_with("exportJobId", "STARTED")
         self.message.ack.assert_called_once()
 
-    def test_expected_failure(self):
+    def test_missing_submit_action(self):
         # Given
         self.mock_submission["submitActions"] = []
+        body = '{"exportJobId": "exportJobId", "submissionUuid": "submissionUuid", "projectUuid": "projectUuid", "callbackLink": "callbackLink", "context": {}}'
+
+        # When
+        self.listener.try_handle_or_reject(body, self.message)
+
+        # Then
+        self.mock_ingest.get_submission.assert_called_once_with("submissionUuid")
+        self.mock_gcs.start_job.assert_not_called()
+        self.mock_ingest.set_data_file_transfer.assert_not_called()
+        self.message.reject.assert_called_once_with(requeue=False)
+
+    def test_missing_staging_area(self):
+        # Given
+        self.mock_submission.pop("stagingDetails")
         body = '{"exportJobId": "exportJobId", "submissionUuid": "submissionUuid", "projectUuid": "projectUuid", "callbackLink": "callbackLink", "context": {}}'
 
         # When

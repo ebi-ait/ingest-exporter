@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Tuple
 
 from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.gcs.transfer_job import TransferJob
@@ -14,8 +14,7 @@ class TerraTransferClient:
         self.gcs_bucket_prefix = gcs_dest_prefix
         self.notification_topic = notification_topic
 
-    def transfer_data_files(self, submission: Dict, project_uuid, export_job_id: str):
-        upload_area = submission["stagingDetails"]["stagingAreaLocation"]["value"]
+    def transfer_data_files(self, upload_area: str, project_uuid, export_job_id: str):
         transfer_job = self.__get_transfer_job(upload_area, project_uuid, export_job_id)
         self.gcs_transfer.start_job(transfer_job)
 

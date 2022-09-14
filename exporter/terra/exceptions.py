@@ -12,3 +12,7 @@ class ExperimentMessageParseException(Exception):
 
 class SubmissionDoesNotHaveRequiredAction(Exception):
     pass
+
+
+class SubmissionDoesNotHaveStagingArea(Exception):
+    pass
