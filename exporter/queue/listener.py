@@ -38,6 +38,6 @@ class QueueListener(ConsumerProducerMixin):
             try:
                 self.handler.handle_message(json_body, msg)
             except Exception as e:
-                s.logger.error(f"Rejecting message: {body} due to error: {str(e)}")
+                s.logger.error(f"Rejecting message: {body} due to error: {str(e.__class__.__name__)}")
                 msg.reject(requeue=False)
                 s.logger.exception(e)
