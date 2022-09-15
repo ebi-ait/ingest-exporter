@@ -49,6 +49,7 @@ class TestTerraTransferResponder(unittest.TestCase):
         # Then
         self.mock_ingest_set.assert_called_once_with(export_id, 'COMPLETE')
         self.msg_ack.assert_called_once()
+        self.msg_nack.assert_not_called()
 
     def test_handle_empty_message_attributes(self):
         # Given
@@ -64,7 +65,6 @@ class TestTerraTransferResponder(unittest.TestCase):
 
     def test_handle_message_without_transfer_job(self):
         # Given
-        export_id = str(uuid.uuid4())
         self.message.attributes = {
             "eventType": "TRANSFER_OPERATION_SUCCESS"
         }
