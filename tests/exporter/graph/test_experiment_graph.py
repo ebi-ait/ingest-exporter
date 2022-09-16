@@ -1,6 +1,9 @@
 from unittest import TestCase
 
-from exporter.graph.experiment_graph import LinkSet, ProcessLink, SupplementaryFileLink, SupplementedEntity
+from exporter.graph.link_set import LinkSet
+from exporter.graph.process_link import ProcessLink
+from exporter.graph.supplementary_file_link import SupplementaryFileLink
+from exporter.graph.supplemented_entity import SupplementedEntity
 
 
 class TestUtils:

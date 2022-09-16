@@ -3,8 +3,9 @@ from unittest import TestCase
 from hca_ingest.api.ingestapi import IngestApi
 from mock import MagicMock
 
-from exporter.graph.graph_crawler import GraphCrawler
-from exporter.metadata import MetadataResource, MetadataService
+from exporter.graph.crawler import GraphCrawler
+from exporter.metadata.resource import MetadataResource
+from exporter.metadata.service import MetadataService
 from tests.mocks.files import MockEntityFiles
 from tests.mocks.ingest import MockIngestAPI
 

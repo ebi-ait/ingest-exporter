@@ -2,9 +2,10 @@ from typing import Dict, List
 
 from hca_ingest.api.ingestapi import IngestApi
 
-from exporter.graph.experiment_graph import ExperimentGraph
-from exporter.graph.graph_crawler import GraphCrawler
-from exporter.metadata import MetadataResource, DataFile
+from exporter.graph.crawler import GraphCrawler
+from exporter.graph.experiment import ExperimentGraph
+from exporter.metadata.datafile import DataFile
+from exporter.metadata.resource import MetadataResource
 from manifest.manifests import AssayManifest
 
 

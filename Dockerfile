@@ -16,7 +16,7 @@ RUN pip install pip-tools
 COPY requirements.txt ./
 RUN pip-sync requirements.txt
 
-COPY exporter.py receiver.py ./
+COPY exporter.py ./
 COPY ./exporter ./exporter
 COPY ./manifest ./manifest
 
