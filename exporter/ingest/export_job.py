@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, InitVar, field
 from enum import Enum
 from typing import Dict, List
 
@@ -40,17 +40,25 @@ class ExportJobState(Enum):
     FAILED = "FAILED"
 
 
+class DataTransferState(Enum):
+    NOT_STARTED = "NOT_STARTED"
+    STARTED = "STARTED"
+    COMPLETE = "COMPLETE"
+
+
 @dataclass
 class ExportJob:
-    job_id: str
-    num_expected_assays: int
-    export_state: ExportJobState
-    is_data_transfer_complete: bool
+    job: InitVar[dict]
+    job_id: str = field(init=False)
+    num_expected_assays: int = field(init=False, default=0)
+    export_state: ExportJobState = field(init=False)
+    data_file_transfer: DataTransferState = field(init=False, default=DataTransferState.NOT_STARTED)
 
-    @staticmethod
-    def from_dict(data: Dict) -> 'ExportJob':
-        job_id = str(data["_links"]["self"]["href"]).split("/")[0]
-        num_expected_assays = int(data["context"]["totalAssayCount"])
-        is_data_transfer_complete = data["context"].get("isDataTransferComplete")
-        return ExportJob(job_id, num_expected_assays, ExportJobState(data["status"].upper()),
-                         is_data_transfer_complete)
+    def __post_init__(self, job: dict):
+        self.job_id = str(job["_links"]["self"]["href"]).split("/")[-1]
+        self.export_state = ExportJobState(job["status"].upper())
+        if 'context' in job:
+            if 'totalAssayCount' in job['context']:
+                self.num_expected_assays = int(job["context"]["totalAssayCount"])
+            if 'dataFileTransfer' in job["context"]:
+                self.data_file_transfer = DataTransferState(job["context"]["dataFileTransfer"].upper())

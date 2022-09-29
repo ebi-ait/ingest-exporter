@@ -1,5 +1,6 @@
 from kombu import Message
 
+from exporter.ingest.export_job import DataTransferState
 from exporter.ingest.service import IngestService
 from exporter.queue.handler import MessageHandler
 from exporter.session_context import SessionContext
@@ -28,6 +29,6 @@ class TerraSubmissionHandler(MessageHandler):
         self.logger.info('Received data transfer message')
         self.submission_exporter.start_data_file_transfer(export.job_id, export.submission_uuid, export.project_uuid)
         self.logger.info('Started data transfer, informing ingest')
-        self.ingest_service.set_data_file_transfer(export.job_id, "STARTED")
+        self.ingest_service.set_data_file_transfer(export.job_id, DataTransferState.STARTED)
         self.logger.info('Acknowledging data transfer message')
         msg.ack()

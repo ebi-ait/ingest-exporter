@@ -1,6 +1,6 @@
 from hca_ingest.api.ingestapi import IngestApi
 
-from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob
+from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob, DataTransferState
 from exporter.metadata.resource import MetadataResource
 from exporter.session_context import SessionContext
 
@@ -39,7 +39,7 @@ class IngestService:
 
     def get_job(self, job_id: str) -> ExportJob:
         job_url = self.get_job_url(job_id)
-        return ExportJob.from_dict(self.ingest_client.get(job_url).json())
+        return ExportJob(self.ingest_client.get(job_url).json())
 
     def get_job_url(self, job_id: str) -> str:
         return self.ingest_client.get_full_url(f'/exportJobs/{job_id}')
@@ -64,6 +64,6 @@ class IngestService:
         find_entities_by_status_url = f'{entities_url}?status={ExportJobState.EXPORTED.value}'
         return int(self.ingest_client.get(find_entities_by_status_url).json()["page"]["totalElements"])
 
-    def set_data_file_transfer(self, job_id: str, value: str):
+    def set_data_file_transfer(self, job_id: str, state: DataTransferState):
         job_url = self.get_job_url(job_id)
-        self.ingest_client.patch(f'{job_url}/context', json={"dataFileTransfer": value})
+        self.ingest_client.patch(f'{job_url}/context', json={"dataFileTransfer": state.value})
