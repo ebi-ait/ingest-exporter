@@ -34,9 +34,6 @@ class IngestService:
         job_url = self.get_job_url(job_id)
         self.ingest_client.patch(job_url, json={"status": ExportJobState.EXPORTED.value})
 
-    def get_job_state(self, job_id: str) -> ExportJobState:
-        return self.get_job(job_id).export_state
-
     def get_job(self, job_id: str) -> ExportJob:
         job_url = self.get_job_url(job_id)
         return ExportJob(self.ingest_client.get(job_url).json())
