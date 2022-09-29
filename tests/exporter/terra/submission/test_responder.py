@@ -25,9 +25,11 @@ class TestTerraTransferResponder(unittest.TestCase):
     def setUp(self) -> None:
         self.project = 'project'
         self.topic = 'topic'
-        self.mock_ingest_set = MagicMock()
+        self.mock_exists = MagicMock(return_value=True)
+        self.mock_set_transfer = MagicMock()
         mock_ingest = MagicMock(spec=IngestService)
-        mock_ingest.set_data_file_transfer = self.mock_ingest_set
+        mock_ingest.job_exists = self.mock_exists
+        mock_ingest.set_data_file_transfer = self.mock_set_transfer
 
         self.responder = MockTerraTransferResponder(mock_ingest, self.project, self.topic)
 
@@ -48,7 +50,8 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_ingest_set.assert_called_once_with(export_id, DataTransferState.COMPLETE)
+        self.mock_exists.assert_called_once_with(export_id)
+        self.mock_set_transfer.assert_called_once_with(export_id, DataTransferState.COMPLETE)
         self.msg_ack.assert_called_once()
         self.msg_nack.assert_not_called()
 
@@ -60,7 +63,8 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_ingest_set.assert_not_called()
+        self.mock_exists.assert_not_called()
+        self.mock_set_transfer.assert_not_called()
         self.msg_ack.assert_not_called()
         self.msg_nack.assert_called_once()
 
@@ -73,7 +77,8 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_ingest_set.assert_not_called()
+        self.mock_exists.assert_not_called()
+        self.mock_set_transfer.assert_not_called()
         self.msg_ack.assert_not_called()
         self.msg_nack.assert_called_once()
 
@@ -88,6 +93,26 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_ingest_set.assert_not_called()
+        self.mock_exists.assert_not_called()
+        self.mock_set_transfer.assert_not_called()
+        self.msg_ack.assert_not_called()
+        self.msg_nack.assert_called_once()
+
+    def test_handle_message_for_other_server(self):
+        # Given
+        self.mock_exists.return_value = False
+
+        export_id = str(uuid.uuid4())
+        self.message.attributes = {
+            "eventType": "TRANSFER_OPERATION_SUCCESS",
+            "transferJobName": "transferJobs/" + export_id
+        }
+
+        # when
+        self.responder.handle_message(self.message)
+
+        # Then
+        self.mock_exists.assert_called_once_with(export_id)
+        self.mock_set_transfer.assert_not_called()
         self.msg_ack.assert_not_called()
         self.msg_nack.assert_called_once()

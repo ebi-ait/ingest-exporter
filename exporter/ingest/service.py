@@ -38,6 +38,11 @@ class IngestService:
         job_url = self.get_job_url(job_id)
         return ExportJob(self.ingest_client.get(job_url).json())
 
+    def job_exists(self, job_id: str) -> bool:
+        job_url = self.get_job_url(job_id)
+        response = self.ingest_client.session.get(job_url, headers=self.ingest_client.get_headers())
+        return response.ok
+
     def get_job_url(self, job_id: str) -> str:
         return self.ingest_client.get_full_url(f'/exportJobs/{job_id}')
 
