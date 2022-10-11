@@ -27,16 +27,18 @@ class TerraTransferResponder:
             except AlreadyExists:
                 self.logger.info(f'Subscription Found: {self.subscription_path}')
             except Exception as e:
-                self.logger.info(f'Cannot check whether subscription exists: {self.subscription_path} due to {e}')
+                self.logger.info(f'Cannot check whether subscription exists: {self.subscription_path} due to {str(e) if str(e) else e.__class__.__name__}')
 
     def listen(self):
-        with SubscriberClient(credentials=self.credentials) as subscriber:
-            future = subscriber.subscribe(self.subscription_path, callback=self.handle_message)
-            try:
-                self.logger.info(f'Running Google Data Transfer Listener')
-                future.result()
-            except Exception:
-                future.cancel()
+        while True:
+            with SubscriberClient(credentials=self.credentials) as subscriber:
+                future = subscriber.subscribe(self.subscription_path, callback=self.handle_message)
+                try:
+                    self.logger.info(f'Running Google Data Transfer Listener')
+                    future.result()
+                except Exception as e:
+                    self.logger.error(f'Google Data Transfer Listener stopped due to: {str(e) if str(e) else e.__class__.__name__}')
+                    future.cancel()
 
     def handle_message(self, message: Message):
         if message.attributes.get("eventType", "") != "TRANSFER_OPERATION_SUCCESS":
