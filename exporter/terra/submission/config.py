@@ -15,12 +15,6 @@ from exporter.terra.submission.handler import TerraSubmissionHandler
 from exporter.terra.submission.responder import TerraTransferResponder
 
 EXCHANGE = 'ingest.exporter.exchange'
-RETRY_POLICY = {
-    'interval_start': 0,
-    'interval_step': 2,
-    'interval_max': 30,
-    'max_retries': 60
-}
 SUBMISSION_QUEUE_CONFIG = QueueConfig(
     EXCHANGE,
     routing_key='ingest.exporter.submission.submitted',
