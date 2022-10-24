@@ -53,6 +53,7 @@ class ExportJob:
     num_expected_assays: int = field(init=False, default=0)
     export_state: ExportJobState = field(init=False)
     data_file_transfer: DataTransferState = field(init=False, default=DataTransferState.NOT_STARTED)
+    spreadsheet_generation: str = field(init=False, default=DataTransferState.NOT_STARTED)
 
     def __post_init__(self, job: dict):
         self.job_id = str(job["_links"]["self"]["href"]).split("/")[-1]
@@ -62,3 +63,5 @@ class ExportJob:
                 self.num_expected_assays = int(job["context"]["totalAssayCount"])
             if 'dataFileTransfer' in job["context"]:
                 self.data_file_transfer = DataTransferState(job["context"]["dataFileTransfer"].upper())
+            if 'spreadsheetGeneration' in job["context"]:
+                self.spreadsheet_generation = job["context"]["spreadsheetGeneration"]

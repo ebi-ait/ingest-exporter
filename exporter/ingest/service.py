@@ -69,3 +69,15 @@ class IngestService:
     def set_data_file_transfer(self, job_id: str, state: DataTransferState):
         job_url = self.get_job_url(job_id)
         self.ingest_client.patch(f'{job_url}/context', json={"dataFileTransfer": state.value})
+
+    def set_spreadsheet_generation_id(self, export_job_id: str, spreadsheet_generator_id: str):
+        job_url = self.get_job_url(export_job_id)
+        self.ingest_client.patch(f'{job_url}/context', json={
+            "spreadsheetGeneration": spreadsheet_generator_id
+        })
+
+    def start_spreadsheet_generation(self, submission_uuid: str):
+        broker_path = f'/submissions/{submission_uuid}/spreadsheet'
+        url = self.ingest_client.get_full_url(broker_path)
+        response = self.ingest_client.post(url)
+        return response.json().get('job_id')
