@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, InitVar
 
 
 @dataclass
-class SpreadsheetGeneratorMessage:
+class SpreadsheetExporterMessage:
     msg: InitVar[dict]
     job_id: str = field(init=False)
     submission_uuid: str = field(init=False)
