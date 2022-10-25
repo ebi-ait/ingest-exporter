@@ -1,5 +1,7 @@
+import os
 from typing import Tuple
 
+from exporter.terra.gcs.config import GcpConfig
 from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.gcs.transfer_job import TransferJob
 
@@ -13,6 +15,17 @@ class TerraTransferClient:
         self.gcs_dest_bucket = gcs_dest_bucket
         self.gcs_bucket_prefix = gcs_dest_prefix
         self.notification_topic = notification_topic
+
+    @staticmethod
+    def from_env():
+        aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
+        aws_access_key_secret = os.environ['AWS_ACCESS_KEY_SECRET']
+        gcp_config = GcpConfig.from_env()
+        gcs_transfer = GcsTransfer(gcp_config.gcp_credentials_path)
+        terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
+        terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
+
+        return TerraTransferClient(gcs_transfer, aws_access_key_id, aws_access_key_secret, gcp_config.gcp_project, terra_bucket_name, terra_bucket_prefix, gcp_config.gcp_topic)
 
     def transfer_data_files(self, upload_area: str, project_uuid, export_job_id: str):
         transfer_job = self.__get_transfer_job(upload_area, project_uuid, export_job_id)
@@ -41,4 +54,5 @@ class TerraTransferClient:
         bucket_and_key_str = upload_area.split("//")[1]
         bucket_and_key_list = bucket_and_key_str.split("/", 1)
         return bucket_and_key_list[0], bucket_and_key_list[1].split("/")[0]
+
 

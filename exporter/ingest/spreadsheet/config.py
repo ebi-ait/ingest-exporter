@@ -8,6 +8,12 @@ from exporter.ingest.spreadsheet.handler import SpreadsheetHandler
 from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
+from exporter.schema.service import SchemaService
+from exporter.terra.experiment.client import TerraStorageClient
+from exporter.terra.experiment.config import TerraConfig
+from exporter.terra.gcs.config import GcpConfig
+from exporter.terra.gcs.storage import GcsStorage
+from exporter.terra.submission.client import TerraTransferClient
 
 EXCHANGE = 'ingest.exporter.exchange'
 SPREADSHEET_QUEUE_CONFIG = QueueConfig(
@@ -29,8 +35,15 @@ def setup_spreadsheet_generator_exporter() -> Thread:
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
+    schema_service = SchemaService(ingest_client)
 
-    handler = SpreadsheetHandler(ingest_service)
+    gcp_config = GcpConfig.from_env()
+    gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcs_svc_credentials_path)
+    terra_config = TerraConfig.from_env()
+    terra_client = TerraStorageClient(gcs_storage, schema_service, terra_config.terra_bucket_name, terra_config.terra_bucket_prefix)
+
+
+    handler = SpreadsheetHandler(ingest_service, terra_client)
     listener = QueueListener(SPREADSHEET_QUEUE_CONFIG, handler)
     connector = QueueConnector(amqp_conn_config, listener)
 

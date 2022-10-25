@@ -13,6 +13,7 @@ from exporter.schema.service import SchemaService
 from exporter.terra.experiment.client import TerraStorageClient
 from exporter.terra.experiment.exporter import TerraExperimentExporter
 from exporter.terra.experiment.handler import TerraExperimentHandler
+from exporter.terra.gcs.config import GcpConfig
 from exporter.terra.gcs.storage import GcsStorage
 
 EXCHANGE = 'ingest.exporter.exchange'
@@ -38,6 +39,16 @@ EXPERIMENT_COMPLETE_CONFIG = QueueConfig(
     retry_policy=RETRY_POLICY
 )
 
+@dataclass
+class TerraConfig:
+    terra_bucket_name: str
+    terra_bucket_prefix: str
+
+    @staticmethod
+    def from_env():
+        terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
+        terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
+        return TerraConfig(terra_bucket_name, terra_bucket_prefix)
 
 def setup_terra_experiment_exporter() -> Thread:
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
@@ -45,10 +56,6 @@ def setup_terra_experiment_exporter() -> Thread:
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
 
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
-    gcs_svc_credentials_path = os.environ['GCP_SVC_ACCOUNT_KEY_PATH']
-    gcp_project = os.environ['GCP_PROJECT']
-    terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
-    terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
 
     ingest_client = IngestApi(ingest_api_url)
 
@@ -56,8 +63,10 @@ def setup_terra_experiment_exporter() -> Thread:
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
 
-    gcs_storage = GcsStorage(gcp_project, gcs_svc_credentials_path)
-    terra_client = TerraStorageClient(gcs_storage, schema_service, terra_bucket_name, terra_bucket_prefix)
+    gcp_config = GcpConfig.from_env()
+    gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcs_svc_credentials_path)
+    terra_config = TerraConfig.from_env()
+    terra_client = TerraStorageClient(gcs_storage, schema_service, terra_config.terra_bucket_name, terra_config.terra_bucket_prefix)
     ingest_service = IngestService(ingest_client)
     terra_exporter = TerraExperimentExporter(ingest_service, graph_crawler, terra_client)
 

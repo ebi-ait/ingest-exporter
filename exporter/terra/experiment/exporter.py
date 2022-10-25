@@ -26,7 +26,7 @@ class TerraExperimentExporter:
         process = self.ingest_service.get_metadata('processes', process_uuid)
         project = self.ingest_service.project_for_process(process)
 
-        self.logger.info("Exporting metadata..")
+        self.logger.info("Exporting metadata")
         experiment_graph = self.graph_crawler.generate_complete_experiment_graph(process, project)
 
         self.terra_client.write_metadatas(experiment_graph.nodes.get_nodes(), project.uuid)

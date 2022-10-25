@@ -8,16 +8,17 @@ from google.oauth2.service_account import Credentials
 from exporter.ingest.export_job import DataTransferState
 from exporter.ingest.service import IngestService
 from exporter.session_context import SessionContext
+from exporter.terra.gcs.config import GcpConfig
 
 
 class TerraTransferResponder:
-    def __init__(self, ingest_service: IngestService, gcp_project: str, gcp_topic: str, gcp_credentials_path: str):
+    def __init__(self, ingest_service: IngestService, gcp_config: GcpConfig):
         self.ingest = ingest_service
-        self.subscription_path = SubscriberClient.subscription_path(gcp_project, gcp_topic)
-        topic_path = SubscriberClient.topic_path(gcp_project, gcp_topic)
+        self.subscription_path = SubscriberClient.subscription_path(gcp_config.gcp_project, gcp_config.gcp_topic)
+        topic_path = SubscriberClient.topic_path(gcp_config.gcp_project, gcp_config.gcp_topic)
         self.logger = SessionContext.register_logger(__name__)
 
-        with open(gcp_credentials_path) as source:
+        with open(gcp_config.gcp_credentials_path) as source:
             credentials_file = json.load(source)
         self.credentials = Credentials.from_service_account_info(credentials_file)
         with SubscriberClient(credentials=self.credentials) as subscriber:

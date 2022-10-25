@@ -60,11 +60,7 @@ class GraphCrawler:
         """
         suppl_files_info = self.supplementary_files_info(project)
         if suppl_files_info:
-            graph = ExperimentGraph()
-            graph.nodes.add_nodes(suppl_files_info.files + [project])
-            suppl_files_link = GraphCrawler.supplementary_file_link_for(suppl_files_info)
-            graph.links.add_link(suppl_files_link)
-
+            graph = ExperimentGraph.from_supplementary_files_info(suppl_files_info, project)
             return graph
         else:
             graph = ExperimentGraph()

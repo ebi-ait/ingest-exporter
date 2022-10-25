@@ -35,7 +35,8 @@ The direct dependencies are listed in `requirements.in`, `dev-requirements.in` i
 ## Install dependencies
 
 * by using `pip-sync` from `pip-tools`
-```
+```shell
+pip install pip-tools
 pip-sync requirements.txt dev-requirements.txt
 ```
 * or by just using `pip install` 
