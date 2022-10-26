@@ -25,6 +25,8 @@ cffi==1.15.1
     # via cryptography
 charset-normalizer==2.1.0
     # via requests
+crc32c==2.3
+    # via -r requirements.in
 cryptography==37.0.4
     # via hca-ingest
 et-xmlfile==1.1.0

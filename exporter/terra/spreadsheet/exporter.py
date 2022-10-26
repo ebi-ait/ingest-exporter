@@ -1,9 +1,11 @@
+import hashlib
 import logging
+import os
 import uuid
 from tempfile import NamedTemporaryFile
 
+import crc32c as crc32c
 from hca_ingest.downloader.workbook import WorkbookDownloader
-from openpyxl.workbook import Workbook
 
 from exporter.graph.info.supplementary_files import SupplementaryFilesInfo
 from exporter.graph.experiment import ExperimentGraph
@@ -20,60 +22,64 @@ class SpreadsheetExporter:
         self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
-        submission = self.ingest.get_submission(submission_uuid)
-        submission_url = submission['_links']['self']['href']
-        staging_area = submission['stagingDetails']['stagingAreaLocation']['value']
-
         self.logger.info("Generating Spreadsheet")
         workbook = self.downloader.get_workbook_from_submission(submission_uuid)
-        # self.save_spreadsheet(spreadsheet_details, workbook)
-        # get metadata
-        self.process_spreadsheet_metadata(project_uuid, workbook)
-
-    def process_spreadsheet_metadata(self, project_uuid: str, workbook: Workbook):
-        schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
+        self.logger.info("Generating Metadata")
         project = self.ingest.get_metadata(entity_type='project', uuid=project_uuid)
-        filename = f'metadata_{project_uuid}.xlsx'
-        file_metadata: MetadataResource = self.build_supplementary_file_payload(schema_url, filename, project)
-        spreadsheet_file_uuid = file_metadata.uuid
-        self.terra.write_metadata(file_metadata, project_uuid)
-        # links json
-        self.write_links(file_metadata, project)
-        # copy spreadsheet to terra
-        with NamedTemporaryFile() as tmp:
-            workbook.save(tmp.name)
-            tmp.seek(0)
-            stream = tmp.read()
-            self.terra.write_to_staging_bucket(object_key=f'{project_uuid}/data/{filename}', data_stream=stream)
-        pass
+        with NamedTemporaryFile() as spreadsheet:
+            workbook.save(spreadsheet.name)
+            file = self.create_supplementary_file_metadata(spreadsheet, project)
+            self.logger.info("Writing to Terra")
+            self.write_to_terra(spreadsheet, project, file)
 
-    def write_links(self, file_metadata:MetadataResource, project:MetadataResource):
-        supplementary_files_info = SupplementaryFilesInfo(for_entity=project, files=[file_metadata])
+    def write_to_terra(self, spreadsheet: NamedTemporaryFile, project: MetadataResource, file: MetadataResource):
+        self.terra.write_metadata(file, project.uuid)
+        self.write_links(file, project)
+        spreadsheet.seek(0)
+        spreadsheet_bytes = spreadsheet.read()
+        self.terra.write_to_staging_bucket(
+            object_key=f'{project.uuid}/data/{file.full_resource["fileName"]}',
+            data_stream=spreadsheet_bytes
+        )
+
+    def write_links(self, file: MetadataResource, project: MetadataResource):
+        supplementary_files_info = SupplementaryFilesInfo(for_entity=project, files=[file])
         experiment_graph = ExperimentGraph.from_supplementary_files_info(supplementary_files_info, project)
-        self.terra.write_links(experiment_graph.links,
-                               file_metadata.uuid,
-                               file_metadata.dcp_version,
-                               project.uuid)
+        self.terra.write_links(
+            experiment_graph.links,
+            file.uuid,
+            file.dcp_version,
+            project.uuid
+        )
 
-    @staticmethod
-    def build_supplementary_file_payload(schema_url: str, filename: str, project) -> MetadataResource:
+    def create_supplementary_file_metadata(self, spreadsheet: NamedTemporaryFile, project: MetadataResource) -> MetadataResource:
+        schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
+        filename = f'metadata_{project.uuid}.xlsx'
+        # ToDo: This can be way better but I'm out of time!
+        spreadsheet.seek(0, os.SEEK_END)
+        size_in_bytes = spreadsheet.tell()
+        spreadsheet.seek(0)
+        spreadsheet_bytes = spreadsheet.read()
+        s256 = hashlib.sha256(spreadsheet_bytes)
+        s1 = hashlib.sha1(spreadsheet_bytes)
+        crc = crc32c.crc32c(spreadsheet_bytes)
         return MetadataResource.from_dict({
             "fileName": filename,
             "dataFileUuid": str(uuid.uuid4()),
             "cloudUrl": None,
             "fileContentType": "xlsx",
-            "size": None,
+            "size": size_in_bytes,
             "checksums": {
-                "sha256": "",
-                "crc32c": "",
-                "sha1": "",
-                "s3_etag": ""
+                "sha256": s256.hexdigest(),
+                "crc32c": crc,
+                "sha1": s1.hexdigest(),
+                "s3_etag": None
             },
             "uuid": {"uuid": str(uuid.uuid4())},
-            "dcpVersion": project.dcpVersion,
+            "dcpVersion": project.dcp_version,
             "type": "file",
-            "submissionDate": "",
-            "updateDate": "",
+            "submissionDate": "",  # ToDo: get from submission?
+            "updateDate": "",  # ToDo: get from submission?
             "content": {
                 "describedBy": schema_url,
                 "schema_type": "file",
