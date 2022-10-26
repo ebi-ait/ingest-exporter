@@ -5,7 +5,7 @@ from google.cloud.pubsub_v1 import SubscriberClient
 from google.cloud.pubsub_v1.subscriber.message import Message
 from google.oauth2.service_account import Credentials
 
-from exporter.ingest.export_job import DataTransferState
+from exporter.ingest.export_job import ExportContextState
 from exporter.ingest.service import IngestService
 from exporter.session_context import SessionContext
 from exporter.terra.gcs.config import GcpConfig
@@ -58,6 +58,6 @@ class TerraTransferResponder:
 
     def hande_data_transfer_complete(self, message: Message, export_job_id: str):
         self.logger.info(f'Received message that data transfer is complete, informing ingest')
-        self.ingest.set_data_file_transfer(export_job_id, DataTransferState.COMPLETE)
+        self.ingest.set_data_file_transfer(export_job_id, ExportContextState.COMPLETE)
         self.logger.info(f'Acknowledging data transfer complete message')
         message.ack()

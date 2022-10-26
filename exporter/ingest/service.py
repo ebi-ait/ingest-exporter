@@ -1,6 +1,6 @@
 from hca_ingest.api.ingestapi import IngestApi
 
-from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob, DataTransferState
+from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob, ExportContextState
 from exporter.metadata.resource import MetadataResource
 from exporter.session_context import SessionContext
 
@@ -66,18 +66,13 @@ class IngestService:
         find_entities_by_status_url = f'{entities_url}?status={ExportJobState.EXPORTED.value}'
         return int(self.api.get(find_entities_by_status_url).json()["page"]["totalElements"])
 
-    def set_data_file_transfer(self, job_id: str, state: DataTransferState):
+    def set_data_file_transfer(self, export_job_id: str, state: ExportContextState):
+        self.__set_export_job_context_state(export_job_id, "dataFileTransfer", state)
+
+    def set_spreadsheet_generation(self, export_job_id: str, state: ExportContextState):
+        self.__set_export_job_context_state(export_job_id, "spreadsheetGeneration", state)
+
+    def __set_export_job_context_state(self, job_id: str, context: str, state: ExportContextState):
         job_url = self.get_job_url(job_id)
-        self.api.patch(f'{job_url}/context', json={"dataFileTransfer": state.value})
+        self.api.patch(f'{job_url}/context', json={context: state.value})
 
-    def set_spreadsheet_generation_id(self, export_job_id: str, spreadsheet_generator_id: str):
-        job_url = self.get_job_url(export_job_id)
-        self.api.patch(f'{job_url}/context', json={
-            "spreadsheetGeneration": spreadsheet_generator_id
-        })
-
-    def start_spreadsheet_generation(self, submission_uuid: str):
-        broker_path = f'/submissions/{submission_uuid}/spreadsheet'
-        url = self.api.get_full_url(broker_path)
-        response = self.api.post(url)
-        return response.json().get('job_id')

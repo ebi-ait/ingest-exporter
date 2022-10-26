@@ -20,17 +20,15 @@ class SpreadsheetExporter:
         self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
-        # Inform ingest that the generation has started
         submission = self.ingest.get_submission(submission_uuid)
         submission_url = submission['_links']['self']['href']
         staging_area = submission['stagingDetails']['stagingAreaLocation']['value']
-        # download workbook
+
+        self.logger.info("Generating Spreadsheet")
         workbook = self.downloader.get_workbook_from_submission(submission_uuid)
         # self.save_spreadsheet(spreadsheet_details, workbook)
-        self.process_spreadsheet_metadata(project_uuid, workbook)
-        self.logger.info(f'Done exporting spreadsheet for submission {submission_uuid}!')
         # get metadata
-        # Inform ingest that the generation has finished
+        self.process_spreadsheet_metadata(project_uuid, workbook)
 
     def process_spreadsheet_metadata(self, project_uuid: str, workbook: Workbook):
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')

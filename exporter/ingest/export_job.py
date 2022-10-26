@@ -40,7 +40,7 @@ class ExportJobState(Enum):
     FAILED = "FAILED"
 
 
-class DataTransferState(Enum):
+class ExportContextState(Enum):
     NOT_STARTED = "NOT_STARTED"
     STARTED = "STARTED"
     COMPLETE = "COMPLETE"
@@ -52,8 +52,8 @@ class ExportJob:
     job_id: str = field(init=False)
     num_expected_assays: int = field(init=False, default=0)
     export_state: ExportJobState = field(init=False)
-    data_file_transfer: DataTransferState = field(init=False, default=DataTransferState.NOT_STARTED)
-    spreadsheet_generation: str = field(init=False, default=DataTransferState.NOT_STARTED)
+    data_file_transfer: ExportContextState = field(init=False, default=ExportContextState.NOT_STARTED)
+    spreadsheet_generation: ExportContextState = field(init=False, default=ExportContextState.NOT_STARTED)
 
     def __post_init__(self, job: dict):
         self.job_id = str(job["_links"]["self"]["href"]).split("/")[-1]
@@ -62,6 +62,6 @@ class ExportJob:
             if 'totalAssayCount' in job['context']:
                 self.num_expected_assays = int(job["context"]["totalAssayCount"])
             if 'dataFileTransfer' in job["context"]:
-                self.data_file_transfer = DataTransferState(job["context"]["dataFileTransfer"].upper())
+                self.data_file_transfer = ExportContextState(job["context"]["dataFileTransfer"].upper())
             if 'spreadsheetGeneration' in job["context"]:
-                self.spreadsheet_generation = job["context"]["spreadsheetGeneration"]
+                self.spreadsheet_generation = ExportContextState(job["context"]["spreadsheetGeneration"].upper())

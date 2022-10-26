@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from kombu import Message
 
-from exporter.ingest.export_job import DataTransferState
+from exporter.ingest.export_job import ExportContextState
 from exporter.ingest.service import IngestService
 from exporter.session_context import get_session_value
 from exporter.terra.submission.exporter import TerraSubmissionExporter
@@ -44,7 +44,7 @@ class TestTerraSubmissionHandler(unittest.TestCase):
 
         # Then
         self.mock_exporter_start.assert_called_once_with(export_job, submission, project)
-        self.mock_ingest_set.assert_called_once_with(export_job, DataTransferState.STARTED)
+        self.mock_ingest_set.assert_called_once_with(export_job, ExportContextState.STARTED)
 
     def test_get_context(self):
         export_job = str(uuid.uuid4())
