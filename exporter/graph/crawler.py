@@ -1,33 +1,18 @@
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from functools import reduce
 from operator import iconcat
 from typing import List, Iterable, Optional, Callable
 
-from exporter.graph.experiment import ExperimentGraph
-from exporter.graph.input import Input
-from exporter.graph.output import Output
-from exporter.graph.process_link import ProcessLink
-from exporter.graph.protocol_link import ProtocolLink
-from exporter.graph.supplementary_file import SupplementaryFile
-from exporter.graph.supplementary_file_link import SupplementaryFileLink
-from exporter.graph.supplemented_entity import SupplementedEntity
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
 
-
-@dataclass
-class ProcessInfo:
-    process: MetadataResource
-    inputs: List[MetadataResource]
-    outputs: List[MetadataResource]
-    protocols: List[MetadataResource]
-
-
-@dataclass
-class SupplementaryFilesInfo:
-    for_entity: MetadataResource
-    files: List[MetadataResource]
+from .experiment import ExperimentGraph
+from .info.process import ProcessInfo
+from .info.supplementary_files import SupplementaryFilesInfo
+from .entity.input import Input
+from .entity.output import Output
+from .link.process import ProcessLink
+from .link.protocol import ProtocolLink
 
 
 class GraphCrawler:
@@ -97,16 +82,6 @@ class GraphCrawler:
         process_type = process_info.process.concrete_type()
         process_uuid = process_info.process.uuid
         return ProcessLink(process_uuid, process_type, link_inputs, link_outputs, link_protocols)
-
-    @staticmethod
-    def supplementary_file_link_for(supplementary_files_info: SupplementaryFilesInfo) -> SupplementaryFileLink:
-        for_entity = supplementary_files_info.for_entity
-        supplementary_files = [SupplementaryFile(file.concrete_type(), file.uuid) for file in supplementary_files_info.files]
-
-        return SupplementaryFileLink(
-            SupplementedEntity(for_entity.concrete_type(), for_entity.uuid),
-            supplementary_files
-        )
 
     @staticmethod
     def flatten(list_of_lists: Iterable[Iterable]) -> List:

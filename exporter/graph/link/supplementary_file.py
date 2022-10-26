@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Iterable, Dict, Any
 
-from exporter.graph.supplementary_file import SupplementaryFile
-from exporter.graph.supplemented_entity import SupplementedEntity
+from exporter.graph.entity.supplementary_file import SupplementaryFile
+from exporter.graph.entity.supplemented_entity import SupplementedEntity
 
 
 @dataclass
