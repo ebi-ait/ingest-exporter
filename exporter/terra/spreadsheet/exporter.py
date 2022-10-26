@@ -16,7 +16,7 @@ class SpreadsheetExporter:
     def __init__(self, ingest_service: IngestService, terra_client:  TerraStorageClient):
         self.ingest = ingest_service
         self.terra = terra_client
-        self.downloader = WorkbookDownloader(ingest_service.ingest_client)
+        self.downloader = WorkbookDownloader(self.ingest.api)
         self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
@@ -33,7 +33,7 @@ class SpreadsheetExporter:
         # Inform ingest that the generation has finished
 
     def process_spreadsheet_metadata(self, project_uuid: str, workbook: Workbook):
-        schema_url = self.ingest_api.get_latest_schema_url('type', 'file', 'supplementary_file')
+        schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
         project = self.ingest.get_metadata(entity_type='project', uuid=project_uuid)
         filename = f'metadata_{project_uuid}.xlsx'
         file_metadata: MetadataResource = self.build_supplementary_file_payload(schema_url, filename, project)
@@ -58,18 +58,18 @@ class SpreadsheetExporter:
                                project.uuid)
 
     @staticmethod
-    def build_supplementary_file_payload(schema_url, filename, project) -> MetadataResource:
+    def build_supplementary_file_payload(schema_url: str, filename: str, project) -> MetadataResource:
         return MetadataResource.from_dict({
             "fileName": filename,
             "dataFileUuid": str(uuid.uuid4()),
-            "cloudUrl": "n/a",
+            "cloudUrl": None,
             "fileContentType": "xlsx",
-            "size": "",
+            "size": None,
             "checksums": {
-                "sha256":"",
-                "crc32c":"",
-                "sha1":"",
-                "s3_etag":""
+                "sha256": "",
+                "crc32c": "",
+                "sha1": "",
+                "s3_etag": ""
             },
             "uuid": {"uuid": str(uuid.uuid4())},
             "dcpVersion": project.dcpVersion,
