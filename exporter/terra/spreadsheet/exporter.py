@@ -21,28 +21,16 @@ class SpreadsheetExporter:
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
         # Inform ingest that the generation has started
-        try:
-            submission = self.ingest.get_submission(submission_uuid)
-            submission_url = submission['_links']['self']['href']
-            staging_area = submission['stagingDetails']['stagingAreaLocation']['value']
-            # Note: We shouldn't do this, we aren't ssaving the sheet to a place broker can get it
-            # Also it means saving changes to the submission multiple times during export which can trigger more conficts
-            # create_date = self.update_spreadsheet_start(submission_url, job_id)
-            # download workbook
-            workbook = self.downloader.get_workbook_from_submission(submission_uuid)
-            # self.save_spreadsheet(spreadsheet_details, workbook)
-            # Nope: see above
-            # self.update_spreadsheet_finish(create_date, submission_url, job_id)
-            self.process_spreadsheet_metadata(project_uuid, workbook)
-            self.logger.info(f'Done exporting spreadsheet for submission {submission_uuid}!')
-        except Exception as e:
-            err = f'Problem generating spreadsheet: {str(e)}'
-            self.logger.error(err, e)
-            raise Exception(err) from e
-
+        submission = self.ingest.get_submission(submission_uuid)
+        submission_url = submission['_links']['self']['href']
+        staging_area = submission['stagingDetails']['stagingAreaLocation']['value']
+        # download workbook
+        workbook = self.downloader.get_workbook_from_submission(submission_uuid)
+        # self.save_spreadsheet(spreadsheet_details, workbook)
+        self.process_spreadsheet_metadata(project_uuid, workbook)
+        self.logger.info(f'Done exporting spreadsheet for submission {submission_uuid}!')
         # get metadata
         # Inform ingest that the generation has finished
-        pass
 
     def process_spreadsheet_metadata(self, project_uuid: str, workbook: Workbook):
         schema_url = self.ingest_api.get_latest_schema_url('type', 'file', 'supplementary_file')
