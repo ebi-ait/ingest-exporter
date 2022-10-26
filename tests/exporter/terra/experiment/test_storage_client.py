@@ -8,7 +8,7 @@ from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.metadata.service import MetadataService
 from exporter.schema.service import SchemaService
-from exporter.terra.experiment.client import TerraStorageClient
+from exporter.terra.storage import TerraStorageClient
 from tests.mocks.files import MockEntityFiles
 
 

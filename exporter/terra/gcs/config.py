@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 
+
 @dataclass
 class GcpConfig:
     gcp_credentials_path:str

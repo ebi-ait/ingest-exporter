@@ -7,13 +7,14 @@ import requests
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
-from exporter.graph.link_set import LinkSet
+from exporter.graph.link.link_set import LinkSet
 from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.schema.service import SchemaService
-from exporter.terra.gcs.storage import Streamable, GcsStorage
 from exporter.utils import log_function_and_params
+
+from .gcs.storage import Streamable, GcsStorage
 
 LOGGER_NAME = 'TerraExperimentExporter'
 

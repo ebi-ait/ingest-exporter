@@ -6,7 +6,7 @@ from google.cloud.pubsub_v1 import SubscriberClient
 
 from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.gcs.transfer_job import TransferJob
-from exporter.terra.submission.client import TerraTransferClient
+from exporter.terra.transfer import TerraTransferClient
 
 
 class TestTerraTransferClient(unittest.TestCase):

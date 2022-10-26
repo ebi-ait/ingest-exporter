@@ -10,7 +10,8 @@ from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
 from exporter.schema.service import SchemaService
-from exporter.terra.experiment.client import TerraStorageClient
+from exporter.terra.config import TerraConfig
+from exporter.terra.storage import TerraStorageClient
 from exporter.terra.experiment.exporter import TerraExperimentExporter
 from exporter.terra.experiment.handler import TerraExperimentHandler
 from exporter.terra.gcs.config import GcpConfig
@@ -39,16 +40,6 @@ EXPERIMENT_COMPLETE_CONFIG = QueueConfig(
     retry_policy=RETRY_POLICY
 )
 
-@dataclass
-class TerraConfig:
-    terra_bucket_name: str
-    terra_bucket_prefix: str
-
-    @staticmethod
-    def from_env():
-        terra_bucket_name = os.environ['TERRA_BUCKET_NAME']
-        terra_bucket_prefix = os.environ['TERRA_BUCKET_PREFIX']
-        return TerraConfig(terra_bucket_name, terra_bucket_prefix)
 
 def setup_terra_experiment_exporter() -> Thread:
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')

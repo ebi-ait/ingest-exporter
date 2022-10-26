@@ -8,8 +8,8 @@ from google.oauth2.service_account import Credentials
 from googleapiclient._auth import with_scopes
 from googleapiclient.errors import HttpError
 
-from .exceptions import FileTransferCouldNotStart, FileTransferAlreadyExists, \
-    TransferOperationsParseError
+from .exceptions import FileTransferCouldNotStart, FileTransferAlreadyExists
+from .exceptions import TransferOperationsParseError
 from .transfer_job import TransferJob
 
 

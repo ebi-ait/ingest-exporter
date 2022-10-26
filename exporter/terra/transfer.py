@@ -1,9 +1,9 @@
 import os
 from typing import Tuple
 
-from exporter.terra.gcs.config import GcpConfig
-from exporter.terra.gcs.transfer import GcsTransfer
-from exporter.terra.gcs.transfer_job import TransferJob
+from .gcs.config import GcpConfig
+from .gcs.transfer import GcsTransfer
+from .gcs.transfer_job import TransferJob
 
 
 class TerraTransferClient:

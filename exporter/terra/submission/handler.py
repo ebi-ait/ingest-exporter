@@ -4,8 +4,9 @@ from exporter.ingest.export_job import DataTransferState
 from exporter.ingest.service import IngestService
 from exporter.queue.handler import MessageHandler
 from exporter.session_context import SessionContext
-from exporter.terra.submission.exporter import TerraSubmissionExporter
-from exporter.terra.submission.message import SubmissionExportMessage
+
+from .exporter import TerraSubmissionExporter
+from .message import SubmissionExportMessage
 
 
 class TerraSubmissionHandler(MessageHandler):

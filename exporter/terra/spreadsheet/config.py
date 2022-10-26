@@ -8,10 +8,11 @@ from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
 from exporter.schema.service import SchemaService
-from exporter.terra.experiment.client import TerraStorageClient
-from exporter.terra.experiment.config import TerraConfig
+from exporter.terra.storage import TerraStorageClient
+from exporter.terra.config import TerraConfig
 from exporter.terra.gcs.config import GcpConfig
 from exporter.terra.gcs.storage import GcsStorage
+
 from .handler import SpreadsheetHandler
 
 EXCHANGE = 'ingest.exporter.exchange'

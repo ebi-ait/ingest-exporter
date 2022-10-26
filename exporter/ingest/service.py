@@ -53,7 +53,7 @@ class IngestService:
         return MetadataResource.from_dict(self.ingest_client.get_entity_by_uuid(entity_type, uuid))
 
     def get_submission(self, submission_uuid):
-        return self.ingest_client.get_entity_by_uuid('submissionEnvelopes', submission_uuid)
+        return self.ingest_client.get_submission_by_uuid(submission_uuid)
 
     def project_for_process(self, process: MetadataResource) -> MetadataResource:
         return MetadataResource.from_dict(list(self.ingest_client.get_related_entities(

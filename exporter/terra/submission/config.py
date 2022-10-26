@@ -9,11 +9,11 @@ from exporter.queue.config import QueueConfig, AmqpConnConfig
 from exporter.queue.connector import QueueConnector
 from exporter.queue.listener import QueueListener
 from exporter.terra.gcs.config import GcpConfig
-from exporter.terra.gcs.transfer import GcsTransfer
-from exporter.terra.submission.client import TerraTransferClient
-from exporter.terra.submission.exporter import TerraSubmissionExporter
-from exporter.terra.submission.handler import TerraSubmissionHandler
-from exporter.terra.submission.responder import TerraTransferResponder
+from exporter.terra.transfer import TerraTransferClient
+
+from .exporter import TerraSubmissionExporter
+from .handler import TerraSubmissionHandler
+from .responder import TerraTransferResponder
 
 EXCHANGE = 'ingest.exporter.exchange'
 SUBMISSION_QUEUE_CONFIG = QueueConfig(

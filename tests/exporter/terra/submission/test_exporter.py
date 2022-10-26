@@ -7,7 +7,7 @@ from requests import HTTPError
 from exporter.ingest.service import IngestService
 from exporter.terra.exceptions import SubmissionDoesNotHaveStagingArea, \
     SubmissionDoesNotHaveRequiredAction
-from exporter.terra.submission.client import TerraTransferClient
+from exporter.terra.transfer import TerraTransferClient
 from exporter.terra.submission.exporter import TerraSubmissionExporter
 
 

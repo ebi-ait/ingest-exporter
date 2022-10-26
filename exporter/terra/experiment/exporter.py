@@ -3,7 +3,7 @@ import logging
 from exporter import utils
 from exporter.graph.crawler import GraphCrawler
 from exporter.ingest.service import IngestService
-from exporter.terra.experiment.client import TerraStorageClient
+from exporter.terra.storage import TerraStorageClient
 
 LOGGER_NAME = 'TerraExperimentExporter'
 

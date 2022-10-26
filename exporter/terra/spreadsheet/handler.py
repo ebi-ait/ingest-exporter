@@ -3,14 +3,14 @@ from kombu import Message
 from exporter.ingest.service import IngestService
 from exporter.queue.handler import MessageHandler
 from exporter.session_context import SessionContext
-from exporter.terra.experiment.client import TerraStorageClient
+from exporter.terra.storage import TerraStorageClient
 from .exporter import SpreadsheetExporter
 from .message import SpreadsheetExporterMessage
 
 
 class SpreadsheetHandler(MessageHandler):
     def __init__(self, ingest_service: IngestService, terra_client:  TerraStorageClient):
-        super().__init__('IngestSpreadsheetGenerator')
+        super().__init__('IngestSpreadsheetExporter')
         self.exporter = SpreadsheetExporter(ingest_service, terra_client)
 
     def set_context(self, body: dict) -> SessionContext:

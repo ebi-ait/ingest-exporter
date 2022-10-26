@@ -1,15 +1,15 @@
-# from hca_ingest.downloader.workbook import WorkbookDownloader
+import logging
 import uuid
 from tempfile import NamedTemporaryFile
 
 from hca_ingest.downloader.workbook import WorkbookDownloader
 from openpyxl.workbook import Workbook
 
-from exporter.graph.crawler import SupplementaryFilesInfo
+from exporter.graph.info.supplementary_files import SupplementaryFilesInfo
 from exporter.graph.experiment import ExperimentGraph
 from exporter.ingest.service import IngestService
 from exporter.metadata.resource import MetadataResource
-from exporter.terra.experiment.client import TerraStorageClient
+from exporter.terra.storage import TerraStorageClient
 
 
 class SpreadsheetExporter:
@@ -17,22 +17,26 @@ class SpreadsheetExporter:
         self.ingest = ingest_service
         self.terra = terra_client
         self.downloader = WorkbookDownloader(ingest_service.ingest_client)
+        self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
         # Inform ingest that the generation has started
         try:
-            submission = self.ingest_api.get_submission_by_uuid(submission_uuid)
+            submission = self.ingest.get_submission(submission_uuid)
             submission_url = submission['_links']['self']['href']
             staging_area = submission['stagingDetails']['stagingAreaLocation']['value']
-            create_date = self.update_spreadsheet_start(submission_url, job_id)
+            # Note: We shouldn't do this, we aren't ssaving the sheet to a place broker can get it
+            # Also it means saving changes to the submission multiple times during export which can trigger more conficts
+            # create_date = self.update_spreadsheet_start(submission_url, job_id)
             # download workbook
             workbook = self.downloader.get_workbook_from_submission(submission_uuid)
             # self.save_spreadsheet(spreadsheet_details, workbook)
-            self.update_spreadsheet_finish(create_date, submission_url, job_id)
+            # Nope: see above
+            # self.update_spreadsheet_finish(create_date, submission_url, job_id)
             self.process_spreadsheet_metadata(project_uuid, workbook)
             self.logger.info(f'Done exporting spreadsheet for submission {submission_uuid}!')
         except Exception as e:
-            err = f'Problem when generating spreadsheet for submission with uuid {submission_uuid}: {str(e)}'
+            err = f'Problem generating spreadsheet: {str(e)}'
             self.logger.error(err, e)
             raise Exception(err) from e
 

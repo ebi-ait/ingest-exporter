@@ -9,7 +9,7 @@ from exporter.queue.listener import QueueListener
 from exporter.terra.gcs.exceptions import FileTransferCouldNotStart
 from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.gcs.transfer_job import TransferJob
-from exporter.terra.submission.client import TerraTransferClient
+from exporter.terra.transfer import TerraTransferClient
 from exporter.terra.submission.exporter import TerraSubmissionExporter
 from exporter.terra.submission.handler import TerraSubmissionHandler
 
