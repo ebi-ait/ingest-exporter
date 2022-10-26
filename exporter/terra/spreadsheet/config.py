@@ -27,7 +27,7 @@ SPREADSHEET_QUEUE_CONFIG = QueueConfig(
 )
 
 
-def setup_spreadsheet_generator_exporter() -> Thread:
+def setup_terra_spreadsheet_exporter() -> Thread:
     rabbit_host = os.environ.get('RABBIT_HOST', 'localhost')
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
@@ -41,7 +41,6 @@ def setup_spreadsheet_generator_exporter() -> Thread:
     gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcs_svc_credentials_path)
     terra_config = TerraConfig.from_env()
     terra_client = TerraStorageClient(gcs_storage, schema_service, terra_config.terra_bucket_name, terra_config.terra_bucket_prefix)
-
 
     handler = SpreadsheetHandler(ingest_service, terra_client)
     listener = QueueListener(SPREADSHEET_QUEUE_CONFIG, handler)
