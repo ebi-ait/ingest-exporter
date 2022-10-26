@@ -80,7 +80,7 @@ grpcio-status==1.48.1
     # via
     #   google-api-core
     #   google-cloud-pubsub
-hca-ingest==2.5.0
+hca-ingest==2.5.1
     # via -r requirements.in
 httplib2==0.20.4
     # via
