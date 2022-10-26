@@ -25,7 +25,7 @@ class SpreadsheetExporter:
         self.logger.info("Generating Spreadsheet")
         workbook = self.downloader.get_workbook_from_submission(submission_uuid)
         self.logger.info("Generating Metadata")
-        project = self.ingest.get_metadata(entity_type='project', uuid=project_uuid)
+        project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
         with NamedTemporaryFile() as spreadsheet:
             workbook.save(spreadsheet.name)
             file = self.create_supplementary_file_metadata(spreadsheet, project)
