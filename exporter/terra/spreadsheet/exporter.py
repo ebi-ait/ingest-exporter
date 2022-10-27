@@ -11,6 +11,7 @@ from exporter.graph.info.supplementary_files import SupplementaryFilesInfo
 from exporter.graph.experiment import ExperimentGraph
 from exporter.ingest.service import IngestService
 from exporter.metadata.resource import MetadataResource
+from exporter.terra.exceptions import SpreadsheetExportError
 from exporter.terra.storage import TerraStorageClient
 
 
@@ -22,17 +23,23 @@ class SpreadsheetExporter:
         self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
-        self.logger.info("Generating Spreadsheet")
-        workbook = self.downloader.get_workbook_from_submission(submission_uuid)
-        self.logger.info("Generating Metadata")
-        project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
-        with NamedTemporaryFile() as spreadsheet:
-            workbook.save(spreadsheet.name)
-            file = self.create_supplementary_file_metadata(spreadsheet, project)
-            self.logger.info("Writing to Terra")
-            self.write_to_terra(spreadsheet, project, file)
+        try:
+            self.logger.info("Generating Spreadsheet")
+            workbook = self.downloader.get_workbook_from_submission(submission_uuid)
+            self.logger.info("Generating Metadata")
+            project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
+            with NamedTemporaryFile() as spreadsheet:
+                workbook.save(spreadsheet.name)
+                file = self.create_supplementary_file_metadata(spreadsheet, project)
+                self.logger.info("Writing to Terra")
+                self.write_to_terra(spreadsheet, project, file)
+        except Exception as e:
+            self.logger.exception(f'problem generating spreadsheet for {project_uuid}')
+            raise SpreadsheetExportError from e
 
-    def write_to_terra(self, spreadsheet: NamedTemporaryFile, project: MetadataResource, file: MetadataResource):
+    def write_to_terra(self, spreadsheet: NamedTemporaryFile,
+                       project: MetadataResource,
+                       file: MetadataResource):
         self.terra.write_metadata(file, project.uuid)
         self.write_links(file, project)
         spreadsheet.seek(0)
@@ -52,7 +59,8 @@ class SpreadsheetExporter:
             project.uuid
         )
 
-    def create_supplementary_file_metadata(self, spreadsheet: NamedTemporaryFile, project: MetadataResource) -> MetadataResource:
+    def create_supplementary_file_metadata(self, spreadsheet: NamedTemporaryFile,
+                                           project: MetadataResource) -> MetadataResource:
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
         filename = f'metadata_{project.uuid}.xlsx'
         # ToDo: This can be way better but I'm out of time!

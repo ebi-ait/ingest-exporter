@@ -86,11 +86,11 @@ python exporter.py
 1. Once you're finished `kubectl scale deployment/ingest-exporter --replicas=10`
 
 ## Running the Tests
-The project is migrating to use the pytest testing framework.
+The project is migrating to use the [pytest](https://docs.pytest.org/) testing framework.
 There are still some legacy tests written using `unittest` package:
 
 ```shell
-pytest tests
+make test
 ```
 
 # Documentation

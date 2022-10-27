@@ -6,6 +6,7 @@ from hca_ingest.api.ingestapi import IngestApi
 from openpyxl.workbook import Workbook
 
 from exporter.ingest.service import IngestService
+from exporter.terra.exceptions import SpreadsheetExportError
 from exporter.terra.spreadsheet.exporter import SpreadsheetExporter
 from exporter.terra.storage import TerraStorageClient
 
@@ -28,7 +29,7 @@ def ingest_api(mocker, submission, project):
 @pytest.fixture
 def project():
     return {
-        "uuid": { "uuid": "project-uuid" },
+        "uuid": {"uuid": "project-uuid"},
         "dcpVersion": "2022-05-29T13:51:08.593000Z",
         "content": {
             "describedBy": "https://schema.humancellatlas.org/type/project/17.0.0/project",
@@ -57,15 +58,28 @@ def terra_client(mocker):
     return terra_client
 
 
-def test_export(mocker,
-                ingest_service: Mock,
-                terra_client: Mock,
-                project,
-                submission,
-                caplog):
-    # given
+@pytest.fixture
+def exporter(ingest_service, terra_client, mocker):
     exporter = SpreadsheetExporter(ingest_service, terra_client)
     exporter.downloader.get_workbook_from_submission = mocker.Mock(return_value=Workbook())
+    return exporter
+
+
+@pytest.fixture()
+def failing_exporter(ingest_service, terra_client, mocker):
+    exporter = SpreadsheetExporter(ingest_service, terra_client)
+    exporter.downloader.get_workbook_from_submission = mocker.Mock(side_effect=RuntimeError('spreadsheet generation problem'))
+    return exporter
+
+
+def test_happy_path(exporter: SpreadsheetExporter,
+                    ingest_service: Mock,
+                    terra_client: Mock,
+                    project,
+                    submission,
+                    caplog):
+    # given
+    # uses an exporter fixture
 
     # when
     exporter.export_spreadsheet(job_id='test_job_id',
@@ -77,6 +91,21 @@ def test_export(mocker,
     check_generated_links(actual_file_metadata, project, terra_client)
     check_spreadsheet_copied_to_terra(actual_file_metadata, project, terra_client)
     assert "Generating Spreadsheet" in caplog.text
+
+
+def test_exception_during_export(failing_exporter: SpreadsheetExporter,
+                                 caplog):
+    # given an exception is thrown while generating the spreadsheet
+
+    # when
+    with pytest.raises(SpreadsheetExportError):
+        project_uuid = 'test-project-uuid'
+        failing_exporter.export_spreadsheet(job_id='test_job_id',
+                                            project_uuid=project_uuid,
+                                            submission_uuid='test-submission-uuid')
+    assert_that(caplog.text) \
+        .contains("problem generating spreadsheet") \
+        .contains(project_uuid)
 
 
 def check_spreadsheet_copied_to_terra(actual_file_metadata, project, terra_client):
