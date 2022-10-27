@@ -28,22 +28,23 @@ class SpreadsheetExporter:
             workbook = self.downloader.get_workbook_from_submission(submission_uuid)
             self.logger.info("Generating Metadata")
             project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
-            with NamedTemporaryFile() as spreadsheet:
-                workbook.save(spreadsheet.name)
-                file = self.create_supplementary_file_metadata(spreadsheet, project)
+            with NamedTemporaryFile() as spreadsheet_file:
+                workbook.save(spreadsheet_file.name)
+                # todo: make it available in broker as well.
+                file = self.create_supplementary_file_metadata(spreadsheet_file, project)
                 self.logger.info("Writing to Terra")
-                self.write_to_terra(spreadsheet, project, file)
+                self.write_to_terra(spreadsheet_file, project, file)
         except Exception as e:
             self.logger.exception(f'problem generating spreadsheet for {project_uuid}')
             raise SpreadsheetExportError from e
 
-    def write_to_terra(self, spreadsheet: NamedTemporaryFile,
+    def write_to_terra(self, spreadsheet_file: NamedTemporaryFile,
                        project: MetadataResource,
                        file: MetadataResource):
         self.terra.write_metadata(file, project.uuid)
         self.write_links(file, project)
-        spreadsheet.seek(0)
-        spreadsheet_bytes = spreadsheet.read()
+        spreadsheet_file.seek(0)
+        spreadsheet_bytes = spreadsheet_file.read()
         self.terra.write_to_staging_bucket(
             object_key=f'{project.uuid}/data/{file.full_resource["fileName"]}',
             data_stream=spreadsheet_bytes
