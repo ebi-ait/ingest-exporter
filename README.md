@@ -86,10 +86,12 @@ python exporter.py
 1. Once you're finished `kubectl scale deployment/ingest-exporter --replicas=10`
 
 ## Running the Tests
+The project is migrating to use the pytest testing framework.
+There are still some legacy tests written using `unittest` package:
 
-To run all the tests, use `unittest` package:
-
-    python -m unittest 
+```shell
+pytest tests
+```
 
 # Documentation
 - [Terra Staging Area Access](https://ebi-ait.github.io/hca-ebi-dev-team/admin_setup/Setting-up-access-to-Terra-staging-area.html)
