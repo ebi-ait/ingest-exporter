@@ -22,7 +22,7 @@ SPREADSHEET_QUEUE_CONFIG = QueueConfig(
     name='ingest.spreadsheets.new',
     queue_arguments={
         'x-dead-letter-exchange': 'ingest.exporter.exchange',
-        'x-dead-letter-routing-key': 'ingest.terra.submission.error'
+        'x-dead-letter-routing-key': 'ingest.terra.spreadsheet.error'
     }
 )
 
@@ -38,7 +38,7 @@ def setup_terra_spreadsheet_exporter() -> Thread:
     schema_service = SchemaService(ingest_client)
 
     gcp_config = GcpConfig.from_env()
-    gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcs_svc_credentials_path)
+    gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcp_credentials_path)
     terra_config = TerraConfig.from_env()
     terra_client = TerraStorageClient(gcs_storage, schema_service, terra_config.terra_bucket_name, terra_config.terra_bucket_prefix)
 

@@ -17,13 +17,13 @@ from exporter.terra.experiment.handler import TerraExperimentHandler
 from exporter.terra.gcs.config import GcpConfig
 from exporter.terra.gcs.storage import GcsStorage
 
-EXCHANGE = 'ingest.exporter.exchange'
 RETRY_POLICY = {
     'interval_start': 0,
     'interval_step': 2,
     'interval_max': 30,
     'max_retries': 60
 }
+EXCHANGE = 'ingest.exporter.exchange'
 EXPERIMENT_QUEUE_CONFIG = QueueConfig(
     EXCHANGE,
     routing_key='ingest.exporter.experiment.submitted',
@@ -55,7 +55,7 @@ def setup_terra_experiment_exporter() -> Thread:
     graph_crawler = GraphCrawler(metadata_service)
 
     gcp_config = GcpConfig.from_env()
-    gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcs_svc_credentials_path)
+    gcs_storage = GcsStorage(gcp_config.gcp_project, gcp_config.gcp_credentials_path)
     terra_config = TerraConfig.from_env()
     terra_client = TerraStorageClient(gcs_storage, schema_service, terra_config.terra_bucket_name, terra_config.terra_bucket_prefix)
     ingest_service = IngestService(ingest_client)
