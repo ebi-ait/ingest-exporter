@@ -44,10 +44,9 @@ class SpreadsheetExporter:
         self.terra.write_metadata(file, project.uuid)
         self.write_links(file, project)
         spreadsheet_file.seek(0)
-        spreadsheet_bytes = spreadsheet_file.read()
         self.terra.write_to_staging_bucket(
             object_key=f'{project.uuid}/data/{file.full_resource["fileName"]}',
-            data_stream=spreadsheet_bytes
+            data_stream=spreadsheet_file
         )
 
     def write_links(self, file: MetadataResource, project: MetadataResource):
