@@ -26,7 +26,7 @@ class SpreadsheetExporter:
         try:
             self.logger.info("Generating Spreadsheet")
             workbook = self.downloader.get_workbook_from_submission(submission_uuid)
-            self.logger.info("Generating Metadata")
+            self.logger.info("Generating Spreadsheet Metadata")
             project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
             with NamedTemporaryFile() as spreadsheet_file:
                 workbook.save(spreadsheet_file.name)
@@ -70,7 +70,7 @@ class SpreadsheetExporter:
         spreadsheet_bytes = spreadsheet.read()
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
-        crc = crc32c.crc32c(spreadsheet_bytes)
+        crc = hex(crc32c.crc32c(spreadsheet_bytes)).replace('0x','')
         return MetadataResource.from_dict({
             "fileName": filename,
             "dataFileUuid": str(uuid.uuid4()),
@@ -81,13 +81,13 @@ class SpreadsheetExporter:
                 "sha256": s256.hexdigest(),
                 "crc32c": crc,
                 "sha1": s1.hexdigest(),
-                "s3_etag": None
+                "s3_etag": 'n/a - not in s3'
             },
             "uuid": {"uuid": str(uuid.uuid4())},
             "dcpVersion": project.dcp_version,
             "type": "file",
-            "submissionDate": "",  # ToDo: get from submission?
-            "updateDate": "",  # ToDo: get from submission?
+            "submissionDate": project.full_resource['submissionDate'],
+            "updateDate": project.full_resource['updateDate'],
             "content": {
                 "describedBy": schema_url,
                 "schema_type": "file",

@@ -5,7 +5,7 @@ from typing import Iterable, Dict, Tuple
 
 import requests
 from jsonschema.exceptions import ValidationError
-from jsonschema.validators import validate
+from jsonschema.validators import validate as validate_against_schema
 
 from exporter.graph.link.link_set import LinkSet
 from exporter.metadata.descriptor import FileDescriptor
@@ -72,7 +72,7 @@ class TerraStorageClient:
 
         json_doc = file_descriptor.to_dict()
         latest_schema = self.schema_service.cached_latest_file_descriptor_schema()
-        self.update_schema_info_and_validate(json_doc, latest_schema)
+        TerraStorageClient.update_schema_info_and_validate(json_doc, latest_schema)
         return json_doc
 
     def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
@@ -82,7 +82,7 @@ class TerraStorageClient:
         json_doc = link_set.to_dict()
         json_doc["schema_type"] = "links"
         latest_schema = self.schema_service.cached_latest_links_schema()
-        self.update_schema_info_and_validate(json_doc, latest_schema)
+        TerraStorageClient.update_schema_info_and_validate(json_doc, latest_schema)
         return json_doc
 
     def write_staging_area_json(self, project_uuid: str):
@@ -105,9 +105,14 @@ class TerraStorageClient:
     def update_schema_info_and_validate(json_doc, json_schema):
         json_doc["describedBy"] = json_schema.schema_url
         json_doc["schema_version"] = json_schema.schema_version
-        json_schema = requests.get(json_doc["describedBy"]).json()
+        TerraStorageClient.validate_json_doc(json_doc)
+
+    @staticmethod
+    def validate_json_doc(json_doc, json_schema=None):
+        if json_schema is None:
+            json_schema = requests.get(json_doc["describedBy"]).json()
         try:
-            validate(instance=json_doc, schema=json_schema)
+            validate_against_schema(instance=json_doc, schema=json_schema)
         except ValidationError as e:
             raise MetadataParseException(
                 f'problem validating document {json_doc} with schema: {json_doc["describedBy"]}', e)

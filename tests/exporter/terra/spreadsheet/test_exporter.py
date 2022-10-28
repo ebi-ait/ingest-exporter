@@ -1,11 +1,15 @@
+from tempfile import NamedTemporaryFile
 from unittest.mock import Mock, ANY
 
 import pytest
-from assertpy import assert_that, extracting
+from assertpy import assert_that
 from hca_ingest.api.ingestapi import IngestApi
 from openpyxl.workbook import Workbook
 
 from exporter.ingest.service import IngestService
+from exporter.metadata.descriptor import FileDescriptor
+from exporter.metadata.resource import MetadataResource
+from exporter.schema.resource import SchemaResource
 from exporter.terra.exceptions import SpreadsheetExportError
 from exporter.terra.spreadsheet.exporter import SpreadsheetExporter
 from exporter.terra.storage import TerraStorageClient
@@ -54,14 +58,19 @@ def submission():
 
 @pytest.fixture
 def terra_client(mocker):
-    terra_client: TerraStorageClient = Mock(spec=TerraStorageClient)
+    terra_client: TerraStorageClient = mocker.Mock(spec=TerraStorageClient)
     return terra_client
 
 
+@pytest.fixture()
+def workbook():
+    return Workbook()
+
+
 @pytest.fixture
-def exporter(ingest_service, terra_client, mocker):
+def exporter(ingest_service, terra_client, workbook, mocker):
     exporter = SpreadsheetExporter(ingest_service, terra_client)
-    exporter.downloader.get_workbook_from_submission = mocker.Mock(return_value=Workbook())
+    exporter.downloader.get_workbook_from_submission = mocker.Mock(return_value=workbook)
     return exporter
 
 
@@ -108,6 +117,14 @@ def test_exception_during_export(failing_exporter: SpreadsheetExporter,
         .contains(project_uuid)
 
 
+def test_spreadsheet_metadata_entity(exporter, project, workbook, terra_client):
+    with NamedTemporaryFile() as spreadsheet_file:
+        workbook.save(spreadsheet_file.name)
+        project_metadata = MetadataResource.from_dict(project)
+        file_metadata = exporter.create_supplementary_file_metadata(spreadsheet_file, project_metadata)
+        check_file_metadata(project_metadata=project_metadata, file_metadata=file_metadata, terra_client=terra_client)
+
+
 def check_spreadsheet_copied_to_terra(actual_file_metadata, project, terra_client):
     terra_client.write_to_staging_bucket.assert_called_with(
         object_key=f'{project["uuid"]["uuid"]}/data/{actual_file_metadata.full_resource["fileName"]}',
@@ -115,17 +132,26 @@ def check_spreadsheet_copied_to_terra(actual_file_metadata, project, terra_clien
     )
 
 
-def check_generated_links(actual_file_metadata, project, terra_client):
+def check_generated_links(actual_file_metadata: MetadataResource,
+                          project_metadata: MetadataResource | dict,
+                          terra_client):
+    if isinstance(project_metadata, dict):
+        project_metadata = MetadataResource.from_dict(project_metadata)
     terra_client.write_links.assert_called_with(ANY,
                                                 actual_file_metadata.uuid,
-                                                project['dcpVersion'],
-                                                project['uuid']['uuid'])
+                                                project_metadata.dcp_version,
+                                                project_metadata.uuid)
 
 
-def check_file_metadata(project, terra_client):
-    terra_client.write_metadata.assert_called_with(ANY, project['uuid']['uuid'])
-    actual_file_metadata = terra_client.write_metadata.call_args.args[0]
-    assert_that(actual_file_metadata.metadata_json['file_core']) \
+def check_file_metadata(project_metadata: MetadataResource | dict, terra_client=None, file_metadata=None):
+    if isinstance(project_metadata, dict):
+        project_metadata = MetadataResource.from_dict(project_metadata)
+    if terra_client and not file_metadata:
+        terra_client.write_metadata.assert_called_with(ANY, project_metadata.uuid)
+        if file_metadata:
+            raise ValueError('Bad input. Use only one of terra_client or file_metadata arguments')
+        file_metadata = terra_client.write_metadata.call_args.args[0]
+    assert_that(file_metadata.metadata_json['file_core']) \
         .has_format('xlsx') \
         .has_file_source("DCP/2 Ingest") \
         .has_content_description([
@@ -135,4 +161,8 @@ def check_file_metadata(project, terra_client):
             "ontology_label": "Database entry metadata"
         }
     ])
-    return actual_file_metadata
+    TerraStorageClient.validate_json_doc(file_metadata.get_content())
+    TerraStorageClient.update_schema_info_and_validate(FileDescriptor.from_file_metadata(file_metadata).to_dict(),
+                                                       SchemaResource(schema_url='https://schema.humancellatlas.org/system/2.0.0/file_descriptor',
+                                                                      schema_version='2.0.0'))
+    return file_metadata
