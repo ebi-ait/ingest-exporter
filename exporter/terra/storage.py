@@ -28,12 +28,11 @@ class TerraStorageClient:
         self.key_prefix = key_prefix
         self.logger = logging.getLogger(LOGGER_NAME)
 
-    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_metadatas(self, metadatas: Iterable[MetadataResource], project_uuid: str):
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
 
-    @log_function_and_params(logging.getLogger(LOGGER_NAME))
+    @log_function_and_params(logging.getLogger(LOGGER_NAME), logging.DEBUG)
     def write_metadata(self, metadata: MetadataResource, project_uuid: str):
         # TODO1: only proceed if lastContentModified > last
         dest_object_key = f'{project_uuid}/metadata/{metadata.concrete_type()}/{metadata.uuid}_{metadata.dcp_version}.json'
@@ -115,4 +114,4 @@ class TerraStorageClient:
             validate_against_schema(instance=json_doc, schema=json_schema)
         except ValidationError as e:
             raise MetadataParseException(
-                f'problem validating document {json_doc} with schema: {json_doc["describedBy"]}', e)
+                f'problem validating document: invalid json path \'{e.json_path}\', schema: {json_doc["describedBy"]}, document {json_doc}', e)
