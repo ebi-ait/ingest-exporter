@@ -70,7 +70,7 @@ class SpreadsheetExporter:
         spreadsheet_bytes = spreadsheet.read()
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
-        crc = hex(crc32c.crc32c(spreadsheet_bytes)).replace('0x','')
+        crc = f'{crc32c.crc32c(spreadsheet_bytes):08x}'
         return MetadataResource.from_dict({
             "fileName": filename,
             "dataFileUuid": str(uuid.uuid4()),

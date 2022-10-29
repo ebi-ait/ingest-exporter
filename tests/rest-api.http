@@ -1,5 +1,24 @@
+### get submission
+GET http://localhost:8080/submissionEnvelopes/5cdc1a0ad96dad0008593264/
+
+> {%
+client.global.set("projects", response.body._links.projects.href);
+client.global.set("exportJobs", response.body._links.exportJobs.href);
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 202");
+});
+%}
+### get project
+GET {{projects}}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 202");
+});
+client.global.set("project_uuid", response.body._embedded.projects[0].uuid.uuid); %}
+
 ### create export job
-POST http://localhost:8080/submissionEnvelopes/60632afcdd9aab1232d0cd7e/exportJobs
+POST {{exportJobs}}
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJraWQiOiJyc2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIxNTNmOTA0ODU3YTg2YjY3ZGRiNjQ0OTIyYzUxZjJkNWYxYjZlMmVhQGVsaXhpci1ldXJvcGUub3JnIiwiYXpwIjoiZTIwNDFjMmQtOTQ0OS00NDY4LTg1NmUtZTg0NzExY2ViZDIxIiwic2NvcGUiOiJlbWFpbCBvcGVuaWQgcHJvZmlsZSIsImlzcyI6Imh0dHBzOi8vbG9naW4uZWxpeGlyLWN6ZWNoLm9yZy9vaWRjLyIsImV4cCI6MTY2NjkxNzU4MCwiaWF0IjoxNjY2OTAzMTgwLCJqdGkiOiJhNmY4Y2I3Zi04ZTRkLTRiMzYtODllOC1lYWNkOGQ0N2JkNTEifQ.Dxh7n2kwHr6BZ9AOxyjYBOdq6_LmKm_DXy5zZq94N148BcLf4mbJiX2b48iSo6cenLTub1HFIr5Ec-cCXT2fXl4_wIJ8v8rNaT3ascgaA9HEWgcKX3jaD7xI7ob7nFKmZ-K7-q2MGCa2uNWfCI7cAAzBWcs-kF0LlEzg5THRXKxpHHqx-z8yUUvWTXD-f0Gwevy3Kf1pDJpYCaKg_MX793oAlYlZrkn33A4O2v7LqxzEV8ym3Uywl42RVW0Nx6lBljJMJvB_q1BCUA0zlU6p1e_KL6Hx_iS6avLKcsECGjWtcTT6xXfrwc2EUZqgkIELUlhXCvYCBdpUvf3WgRVt8A
@@ -7,42 +26,18 @@ Authorization: Bearer eyJraWQiOiJyc2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJ
 {
   "destination": {
     "name": "Dcp",
-    "context": {"projectUuid" : "a29952d9-925e-40f4-8a1c-274f118f1f51"}
+    "context": {"projectUuid" : "{{project_uuid}}"}
   },
   "context": {}
 }
 
-> {% client.global.set("exportJob", response.body._links.exportJob.href); %}
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 201, "Response status is not 202");
+});
+client.global.set("exportJob", response.body._links.exportJob.href);
+%}
 
-<> 2022-10-27T230059.201.json
-<> 2022-10-27T220603.201.json
-<> 2022-10-27T220211.201.json
-<> 2022-10-27T220142.201.json
-<> 2022-10-27T220055.201.json
-<> 2022-10-27T215851.201.json
-<> 2022-10-27T215632.201.json
-<> 2022-10-27T215445.201.json
-<> 2022-10-27T215035.201.json
-<> 2022-10-27T215027.201.json
-<> 2022-10-27T214432.201.json
-<> 2022-10-27T214422.201.json
-<> 2022-10-27T214406.201.json
-<> 2022-10-27T214358.201.json
-<> 2022-10-27T214348.201.json
-<> 2022-10-27T214341.201.json
-<> 2022-10-27T214328.201.json
-<> 2022-10-27T214247.201.json
-<> 2022-10-27T214238.201.json
-<> 2022-10-27T214220.201.json
-<> 2022-10-27T214059.400.json
-<> 2022-10-27T214022.415.json
-<> 2022-10-27T213411.415.json
-<> 2022-10-27T213403.415.json
-<> 2022-10-27T213348.415.json
-<> 2022-10-27T213253.415.json
-<> 2022-10-27T213229.400.html
-<> 2022-10-27T213121.400.html
-<> 2022-10-27T213108.400.html
 
 ### start export spreadsheet
 PATCH {{exportJob}}/context
@@ -57,10 +52,3 @@ client.test("Request executed successfully", function() {
 });
 %}
 
-<> 2022-10-27T230100.202.json
-<> 2022-10-27T220603.202.json
-<> 2022-10-27T220212.202.json
-<> 2022-10-27T220143.202.json
-<> 2022-10-27T220134.202.json
-<> 2022-10-27T220055.202.json
-<> 2022-10-27T215851.400.xml
