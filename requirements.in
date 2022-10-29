@@ -1,4 +1,4 @@
-hca-ingest~=2.5.1
+hca-ingest~=2.5.2
 requests
 kombu
 jsonschema
