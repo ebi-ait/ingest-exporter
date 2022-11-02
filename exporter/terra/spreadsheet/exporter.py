@@ -71,9 +71,11 @@ class SpreadsheetExporter:
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
         crc = f'{crc32c.crc32c(spreadsheet_bytes):08x}'
+        uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_metadata'))
+        datafile_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_data'))
         return MetadataResource.from_dict({
             "fileName": filename,
-            "dataFileUuid": str(uuid.uuid4()),
+            "dataFileUuid": datafile_uuid,
             "cloudUrl": None,
             "fileContentType": "xlsx",
             "size": size_in_bytes,
@@ -83,7 +85,7 @@ class SpreadsheetExporter:
                 "sha1": s1.hexdigest(),
                 "s3_etag": 'n/a - not in s3'
             },
-            "uuid": {"uuid": str(uuid.uuid4())},
+            "uuid": {"uuid": uuid},
             "dcpVersion": project.dcp_version,
             "type": "file",
             "submissionDate": project.full_resource['submissionDate'],
