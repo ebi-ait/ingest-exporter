@@ -23,20 +23,16 @@ class SpreadsheetExporter:
         self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
     def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
-        try:
-            self.logger.info("Generating Spreadsheet")
-            workbook = self.downloader.get_workbook_from_submission(submission_uuid)
-            self.logger.info("Generating Spreadsheet Metadata")
-            project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
-            with NamedTemporaryFile() as spreadsheet_file:
-                workbook.save(spreadsheet_file.name)
-                # todo: make it available in broker as well.
-                file = self.create_supplementary_file_metadata(spreadsheet_file, project)
-                self.logger.info("Writing to Terra")
-                self.write_to_terra(spreadsheet_file, project, file)
-        except Exception as e:
-            self.logger.exception(f'problem generating spreadsheet for {project_uuid}')
-            raise SpreadsheetExportError from e
+        self.logger.info("Generating Spreadsheet")
+        workbook = self.downloader.get_workbook_from_submission(submission_uuid)
+        self.logger.info("Generating Spreadsheet Metadata")
+        project = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
+        with NamedTemporaryFile() as spreadsheet_file:
+            workbook.save(spreadsheet_file.name)
+            # todo: make it available in broker as well.
+            file = self.create_supplementary_file_metadata(spreadsheet_file, project)
+            self.logger.info("Writing to Terra")
+            self.write_to_terra(spreadsheet_file, project, file)
 
     def write_to_terra(self, spreadsheet_file: NamedTemporaryFile,
                        project: MetadataResource,

@@ -10,7 +10,6 @@ from exporter.ingest.service import IngestService
 from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.resource import MetadataResource
 from exporter.schema.resource import SchemaResource
-from exporter.terra.exceptions import SpreadsheetExportError
 from exporter.terra.spreadsheet.exporter import SpreadsheetExporter
 from exporter.terra.storage import TerraStorageClient
 
@@ -107,14 +106,11 @@ def test_exception_during_export(failing_exporter: SpreadsheetExporter,
     # given an exception is thrown while generating the spreadsheet
 
     # when
-    with pytest.raises(SpreadsheetExportError):
+    with pytest.raises(RuntimeError):
         project_uuid = 'test-project-uuid'
         failing_exporter.export_spreadsheet(job_id='test_job_id',
                                             project_uuid=project_uuid,
                                             submission_uuid='test-submission-uuid')
-    assert_that(caplog.text) \
-        .contains("problem generating spreadsheet") \
-        .contains(project_uuid)
 
 
 def test_spreadsheet_metadata_entity(exporter, project, workbook, terra_client):
