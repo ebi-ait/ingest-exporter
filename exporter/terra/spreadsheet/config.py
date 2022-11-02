@@ -19,7 +19,7 @@ EXCHANGE = 'ingest.exporter.exchange'
 SPREADSHEET_QUEUE_CONFIG = QueueConfig(
     EXCHANGE,
     routing_key='ingest.exporter.spreadsheet.requested',
-    name='ingest.spreadsheets.new',
+    name='ingest.terra.spreadsheets.new',
     queue_arguments={
         'x-dead-letter-exchange': 'ingest.exporter.exchange',
         'x-dead-letter-routing-key': 'ingest.terra.spreadsheet.error'
