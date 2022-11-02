@@ -63,7 +63,6 @@ class SpreadsheetExporter:
                                            project: MetadataResource) -> MetadataResource:
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
         filename = f'metadata_{project.uuid}.xlsx'
-        # ToDo: This can be way better but I'm out of time!
         spreadsheet.seek(0, os.SEEK_END)
         size_in_bytes = spreadsheet.tell()
         spreadsheet.seek(0)
@@ -71,7 +70,7 @@ class SpreadsheetExporter:
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
         crc = f'{crc32c.crc32c(spreadsheet_bytes):08x}'
-        uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_metadata'))
+        metadata_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_metadata'))
         datafile_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_data'))
         return MetadataResource.from_dict({
             "fileName": filename,
@@ -85,7 +84,7 @@ class SpreadsheetExporter:
                 "sha1": s1.hexdigest(),
                 "s3_etag": 'n/a - not in s3'
             },
-            "uuid": {"uuid": uuid},
+            "uuid": {"uuid": metadata_uuid},
             "dcpVersion": project.dcp_version,
             "type": "file",
             "submissionDate": project.full_resource['submissionDate'],
