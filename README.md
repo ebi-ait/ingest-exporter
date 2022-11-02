@@ -87,10 +87,10 @@ python exporter.py
 
 ## Running the Tests
 The project is migrating to use the [pytest](https://docs.pytest.org/) testing framework.
-There are still some legacy tests written using `unittest` package:
+Most tests are written using the *legacy* `unittest` package:
 
 ```shell
-make test
+python -m pytest tests
 ```
 
 # Documentation

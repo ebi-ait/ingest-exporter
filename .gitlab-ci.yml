@@ -10,4 +10,8 @@ Test:
     - pip install pip-tools
     - pip-sync requirements.txt dev-requirements.txt
   script:
-    - python -m unittest
+    - python -m pytest tests --junitxml=report.xml
+  artifacts:
+    reports:
+      junit:
+        - report.xml
