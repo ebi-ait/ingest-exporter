@@ -6,7 +6,7 @@ from exporter.graph.entity.supplemented_entity import SupplementedEntity
 
 
 @dataclass
-class SupplementaryFileLink:
+class SupplementaryFilesLink:
     supplemented_entity: SupplementedEntity
     files: Iterable[SupplementaryFile]
 

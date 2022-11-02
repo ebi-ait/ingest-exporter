@@ -6,7 +6,7 @@ from .entity.supplementary_file import SupplementaryFile
 from .entity.supplemented_entity import SupplementedEntity
 from .info.supplementary_files import SupplementaryFilesInfo
 from .link.link_set import LinkSet
-from .link.supplementary_file import SupplementaryFileLink
+from .link.supplementary_files import SupplementaryFilesLink
 
 
 class ExperimentGraph:
@@ -27,19 +27,19 @@ class ExperimentGraph:
         return self
 
     @staticmethod
-    def from_supplementary_files_info(supplementary_files_info, project):
+    def from_supplementary_files_info(supplementary_files_info, project) -> ExperimentGraph:
         graph = ExperimentGraph()
         graph.nodes.add_nodes(supplementary_files_info.files + [project])
-        suppl_files_link = ExperimentGraph.supplementary_file_link_for(supplementary_files_info)
+        suppl_files_link = ExperimentGraph.supplementary_files_link_for(supplementary_files_info)
         graph.links.add_link(suppl_files_link)
         return graph
 
     @staticmethod
-    def supplementary_file_link_for(supplementary_files_info: SupplementaryFilesInfo) -> SupplementaryFileLink:
+    def supplementary_files_link_for(supplementary_files_info: SupplementaryFilesInfo) -> SupplementaryFilesLink:
         for_entity = supplementary_files_info.for_entity
         supplementary_files = [SupplementaryFile(file.concrete_type(), file.uuid) for file in supplementary_files_info.files]
 
-        return SupplementaryFileLink(
+        return SupplementaryFilesLink(
             SupplementedEntity(for_entity.concrete_type(), for_entity.uuid),
             supplementary_files
         )
