@@ -1,8 +1,8 @@
 from typing import Iterable, Set, List, Dict
 
-from exporter.graph.input import Input
-from exporter.graph.output import Output
-from exporter.graph.protocol_link import ProtocolLink
+from exporter.graph.entity.input import Input
+from exporter.graph.entity.output import Output
+from .protocol import ProtocolLink
 
 
 class ProcessLink:

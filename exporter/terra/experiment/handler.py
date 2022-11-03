@@ -4,8 +4,9 @@ from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig
 from exporter.queue.handler import MessageHandler
 from exporter.session_context import SessionContext
-from exporter.terra.experiment.exporter import TerraExperimentExporter
-from exporter.terra.experiment.message import ExperimentMessage
+
+from .exporter import TerraExperimentExporter
+from .message import ExperimentMessage
 
 
 class TerraExperimentHandler(MessageHandler):

@@ -16,3 +16,7 @@ class SubmissionDoesNotHaveRequiredAction(Exception):
 
 class SubmissionDoesNotHaveStagingArea(Exception):
     pass
+
+
+class SpreadsheetExportError(Exception):
+    pass

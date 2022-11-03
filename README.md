@@ -35,7 +35,8 @@ The direct dependencies are listed in `requirements.in`, `dev-requirements.in` i
 ## Install dependencies
 
 * by using `pip-sync` from `pip-tools`
-```
+```shell
+pip install pip-tools
 pip-sync requirements.txt dev-requirements.txt
 ```
 * or by just using `pip install` 
@@ -85,10 +86,12 @@ python exporter.py
 1. Once you're finished `kubectl scale deployment/ingest-exporter --replicas=10`
 
 ## Running the Tests
+The project is migrating to use the [pytest](https://docs.pytest.org/) testing framework.
+Most tests are written using the *legacy* `unittest` package:
 
-To run all the tests, use `unittest` package:
-
-    python -m unittest 
+```shell
+python -m pytest tests
+```
 
 # Documentation
 - [Terra Staging Area Access](https://ebi-ait.github.io/hca-ebi-dev-team/admin_setup/Setting-up-access-to-Terra-staging-area.html)

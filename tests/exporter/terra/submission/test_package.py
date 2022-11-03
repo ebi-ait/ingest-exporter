@@ -3,13 +3,13 @@ from unittest import TestCase
 from kombu import Message
 from mock import MagicMock
 
-from exporter.ingest.export_job import DataTransferState
+from exporter.ingest.export_job import ExportContextState
 from exporter.ingest.service import IngestService
 from exporter.queue.listener import QueueListener
 from exporter.terra.gcs.exceptions import FileTransferCouldNotStart
 from exporter.terra.gcs.transfer import GcsTransfer
 from exporter.terra.gcs.transfer_job import TransferJob
-from exporter.terra.submission.client import TerraTransferClient
+from exporter.terra.transfer import TerraTransferClient
 from exporter.terra.submission.exporter import TerraSubmissionExporter
 from exporter.terra.submission.handler import TerraSubmissionHandler
 
@@ -73,7 +73,7 @@ class TestTerraSubmissionExporterPackage(TestCase):
         # Then
         self.mock_ingest_get.assert_called_once_with("submissionUuid")
         self.mock_gcs_start.assert_called_once_with(test_job)
-        self.mock_ingest_set.assert_called_once_with("exportJobId", DataTransferState.STARTED)
+        self.mock_ingest_set.assert_called_once_with("exportJobId", ExportContextState.STARTED)
         self.msg_ack.assert_called_once()
 
     def test_missing_submit_action(self):

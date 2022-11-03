@@ -1,8 +1,8 @@
 include:
   remote: 'https://raw.githubusercontent.com/ebi-ait/gitlab-ci-templates/master/build-release-deploy.yml'
 
-Unit Test:
-  image: quay.io/ebi-ait/ingest-base-images:python_3.7.13-slim
+Test:
+  image: quay.io/ebi-ait/ingest-base-images:python_3.10-slim
   before_script:
     - python -m venv ./venv
     - source venv/bin/activate
@@ -10,4 +10,8 @@ Unit Test:
     - pip install pip-tools
     - pip-sync requirements.txt dev-requirements.txt
   script:
-    - python -m unittest
+    - python -m pytest tests --junitxml=report.xml
+  artifacts:
+    reports:
+      junit:
+        - report.xml

@@ -1,9 +1,9 @@
 import logging
 
 from exporter.ingest.service import IngestService
-from exporter.terra.exceptions import SubmissionDoesNotHaveRequiredAction, \
-    SubmissionDoesNotHaveStagingArea
-from exporter.terra.submission.client import TerraTransferClient
+from exporter.terra.exceptions import SubmissionDoesNotHaveRequiredAction
+from exporter.terra.exceptions import SubmissionDoesNotHaveStagingArea
+from exporter.terra.transfer import TerraTransferClient
 
 
 class TerraSubmissionExporter:

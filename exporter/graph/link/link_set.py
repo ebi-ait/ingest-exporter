@@ -1,9 +1,9 @@
 from typing import Union, Dict, List
 
-from exporter.graph.process_link import ProcessLink
-from exporter.graph.supplementary_file_link import SupplementaryFileLink
+from .process import ProcessLink
+from .supplementary_files import SupplementaryFilesLink
 
-Link = Union[ProcessLink, SupplementaryFileLink]
+Link = Union[ProcessLink, SupplementaryFilesLink]
 
 
 class LinkSet:

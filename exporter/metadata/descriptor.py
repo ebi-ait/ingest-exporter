@@ -18,7 +18,7 @@ class FileDescriptor:
     def to_dict(self) -> Dict:
         sha1 = self.checksums.sha1.lower() if self.checksums.sha1 else self.checksums.sha1
         sha256 = self.checksums.sha256.lower() if self.checksums.sha256 else self.checksums.sha256
-        crc32c = self.checksums.crc32c.lower() if self.checksums.crc32c else self.checksums.crc32c
+        crc32c = str(self.checksums.crc32c).lower() if self.checksums.crc32c else self.checksums.crc32c
 
         return dict(
             file_id=self.file_uuid,

@@ -109,3 +109,4 @@ venv.bak/
 
 # PyCharm IDE
 .idea/
+/out/

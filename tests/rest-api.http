@@ -1,0 +1,54 @@
+### get submission
+GET http://localhost:8080/submissionEnvelopes/5cdc1a0ad96dad0008593264/
+
+> {%
+client.global.set("projects", response.body._links.projects.href);
+client.global.set("exportJobs", response.body._links.exportJobs.href);
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 202");
+});
+%}
+### get project
+GET {{projects}}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 202");
+});
+client.global.set("project_uuid", response.body._embedded.projects[0].uuid.uuid); %}
+
+### create export job
+POST {{exportJobs}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "destination": {
+    "name": "Dcp",
+    "context": {"projectUuid" : "{{project_uuid}}"}
+  },
+  "context": {}
+}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 201, "Response status is not 202");
+});
+client.global.set("exportJob", response.body._links.exportJob.href);
+%}
+
+
+### start export spreadsheet
+PATCH {{exportJob}}/context
+Accept: application/json
+Content-Type: application/json
+
+{"dataFileTransfer": "COMPLETE"}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 202, "Response status is not 202");
+});
+%}
+

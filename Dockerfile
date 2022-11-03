@@ -1,4 +1,4 @@
-FROM quay.io/ebi-ait/ingest-base-images:python_3.7.13-alpine
+FROM quay.io/ebi-ait/ingest-base-images:python_3.10-alpine
 
 RUN apk update && \
     apk add build-base && \

@@ -21,4 +21,4 @@ class FileChecksums:
 
             return FileChecksums(sha256, crc32c, sha1, s3_etag)
         except (KeyError, TypeError) as e:
-            raise MetadataParseException(e)
+            raise MetadataParseException(e) from e

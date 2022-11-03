@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from google.cloud.pubsub_v1 import SubscriberClient
 from google.cloud.pubsub_v1.subscriber.message import Message
 
-from exporter.ingest.export_job import DataTransferState
+from exporter.ingest.export_job import ExportContextState
 from exporter.ingest.service import IngestService
 from exporter.session_context import SessionContext
 from exporter.terra.submission.responder import TerraTransferResponder
@@ -51,7 +51,7 @@ class TestTerraTransferResponder(unittest.TestCase):
 
         # Then
         self.mock_exists.assert_called_once_with(export_id)
-        self.mock_set_transfer.assert_called_once_with(export_id, DataTransferState.COMPLETE)
+        self.mock_set_transfer.assert_called_once_with(export_id, ExportContextState.COMPLETE)
         self.msg_ack.assert_called_once()
         self.msg_nack.assert_not_called()
 

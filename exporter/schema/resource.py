@@ -14,4 +14,4 @@ class SchemaResource:
             schema_version = data["schemaVersion"]
             return SchemaResource(schema_url, schema_version)
         except (KeyError, TypeError) as e:
-            raise SchemaParseException(e)
+            raise SchemaParseException(e) from e

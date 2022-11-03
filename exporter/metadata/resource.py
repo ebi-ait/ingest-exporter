@@ -37,7 +37,7 @@ class MetadataResource:
             provenance = MetadataProvenance.from_dict(data)
             return MetadataResource(metadata_type, metadata_json, uuid, dcp_version, provenance, data)
         except (KeyError, TypeError) as e:
-            raise MetadataParseException(e)
+            raise MetadataParseException(e) from e
 
     @staticmethod
     def to_dcp_version(date_str: str):

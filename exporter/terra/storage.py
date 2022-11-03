@@ -5,15 +5,16 @@ from typing import Iterable, Dict, Tuple
 
 import requests
 from jsonschema.exceptions import ValidationError
-from jsonschema.validators import validate
+from jsonschema.validators import validate as validate_against_schema
 
-from exporter.graph.link_set import LinkSet
+from exporter.graph.link.link_set import LinkSet
 from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.schema.service import SchemaService
-from exporter.terra.gcs.storage import Streamable, GcsStorage
 from exporter.utils import log_function_and_params
+
+from .gcs.storage import Streamable, GcsStorage
 
 LOGGER_NAME = 'TerraExperimentExporter'
 
@@ -27,12 +28,11 @@ class TerraStorageClient:
         self.key_prefix = key_prefix
         self.logger = logging.getLogger(LOGGER_NAME)
 
-    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_metadatas(self, metadatas: Iterable[MetadataResource], project_uuid: str):
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
 
-    @log_function_and_params(logging.getLogger(LOGGER_NAME))
+    @log_function_and_params(logging.getLogger(LOGGER_NAME), logging.DEBUG)
     def write_metadata(self, metadata: MetadataResource, project_uuid: str):
         # TODO1: only proceed if lastContentModified > last
         dest_object_key = f'{project_uuid}/metadata/{metadata.concrete_type()}/{metadata.uuid}_{metadata.dcp_version}.json'
@@ -71,7 +71,7 @@ class TerraStorageClient:
 
         json_doc = file_descriptor.to_dict()
         latest_schema = self.schema_service.cached_latest_file_descriptor_schema()
-        self.update_schema_info_and_validate(json_doc, latest_schema)
+        TerraStorageClient.update_schema_info_and_validate(json_doc, latest_schema)
         return json_doc
 
     def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
@@ -81,7 +81,7 @@ class TerraStorageClient:
         json_doc = link_set.to_dict()
         json_doc["schema_type"] = "links"
         latest_schema = self.schema_service.cached_latest_links_schema()
-        self.update_schema_info_and_validate(json_doc, latest_schema)
+        TerraStorageClient.update_schema_info_and_validate(json_doc, latest_schema)
         return json_doc
 
     def write_staging_area_json(self, project_uuid: str):
@@ -104,9 +104,14 @@ class TerraStorageClient:
     def update_schema_info_and_validate(json_doc, json_schema):
         json_doc["describedBy"] = json_schema.schema_url
         json_doc["schema_version"] = json_schema.schema_version
-        json_schema = requests.get(json_doc["describedBy"]).json()
+        TerraStorageClient.validate_json_doc(json_doc)
+
+    @staticmethod
+    def validate_json_doc(json_doc, json_schema=None):
+        if json_schema is None:
+            json_schema = requests.get(json_doc["describedBy"]).json()
         try:
-            validate(instance=json_doc, schema=json_schema)
+            validate_against_schema(instance=json_doc, schema=json_schema)
         except ValidationError as e:
             raise MetadataParseException(
-                f'problem validating document {json_doc} with schema: {json_doc["describedBy"]}', e)
+                f'problem validating document: invalid json path \'{e.json_path}\', schema: {json_doc["describedBy"]}, document {json_doc}', e)

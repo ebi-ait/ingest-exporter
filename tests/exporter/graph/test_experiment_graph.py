@@ -1,9 +1,9 @@
 from unittest import TestCase
 
-from exporter.graph.link_set import LinkSet
-from exporter.graph.process_link import ProcessLink
-from exporter.graph.supplementary_file_link import SupplementaryFileLink
-from exporter.graph.supplemented_entity import SupplementedEntity
+from exporter.graph.link.link_set import LinkSet
+from exporter.graph.link.process import ProcessLink
+from exporter.graph.link.supplementary_files import SupplementaryFilesLink
+from exporter.graph.entity.supplemented_entity import SupplementedEntity
 
 
 class TestUtils:
@@ -12,8 +12,8 @@ class TestUtils:
         return ProcessLink(uuid, "process", [], [], [])
 
     @staticmethod
-    def gen_supplementary_file_link(uuid: str) -> SupplementaryFileLink:
-        return SupplementaryFileLink(SupplementedEntity("some_concrete_type", uuid), [])
+    def gen_supplementary_file_link(uuid: str) -> SupplementaryFilesLink:
+        return SupplementaryFilesLink(SupplementedEntity("some_concrete_type", uuid), [])
 
 
 class ExperimentGraphTest(TestCase):
