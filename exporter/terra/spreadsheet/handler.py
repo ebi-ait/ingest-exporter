@@ -30,7 +30,7 @@ class SpreadsheetHandler(MessageHandler):
         message = SpreadsheetExporterMessage(body)
         self.logger.info('Received spreadsheet export message, informing ingest')
         self.ingest.set_spreadsheet_generation(message.job_id, ExportContextState.STARTED)
-        self.exporter.export_spreadsheet(message.job_id, message.project_uuid, message.submission_uuid)
+        self.exporter.export_spreadsheet(message.project_uuid, message.submission_uuid)
         self.logger.info('Spreadsheet export finished, informing ingest')
         self.ingest.set_spreadsheet_generation(message.job_id, ExportContextState.COMPLETE)
         self.logger.info('Acknowledging spreadsheet export message')

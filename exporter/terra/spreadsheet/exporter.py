@@ -20,7 +20,7 @@ class SpreadsheetExporter:
         self.downloader = WorkbookDownloader(self.ingest.api)
         self.logger = logging.getLogger('IngestSpreadsheetExporter')
 
-    def export_spreadsheet(self, job_id: str, project_uuid: str, submission_uuid: str):
+    def export_spreadsheet(self, project_uuid: str, submission_uuid: str):
         self.logger.info("Generating Spreadsheet")
         workbook = self.downloader.get_workbook_from_submission(submission_uuid)
         self.logger.info("Generating Spreadsheet Metadata")
