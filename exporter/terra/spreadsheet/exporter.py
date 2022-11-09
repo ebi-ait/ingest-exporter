@@ -1,6 +1,5 @@
 import hashlib
 import logging
-import os
 import uuid
 from tempfile import NamedTemporaryFile as TempFile
 
@@ -55,10 +54,9 @@ class SpreadsheetExporter:
     def create_supplementary_file_metadata(self, spreadsheet_file: TempFile, project_meta: Metadata) -> Metadata:
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
         filename = f'metadata_{project_meta.uuid}.xlsx'
-        spreadsheet_file.seek(0, os.SEEK_END)
-        spreadsheet_size = spreadsheet_file.tell()
         spreadsheet_file.seek(0)
         spreadsheet_bytes = spreadsheet_file.read()
+        spreadsheet_size = len(spreadsheet_bytes)
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
         crc = f'{crc32c.crc32c(spreadsheet_bytes):08x}'
