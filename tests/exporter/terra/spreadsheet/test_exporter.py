@@ -90,8 +90,7 @@ def test_happy_path(exporter: SpreadsheetExporter,
     # uses an exporter fixture
 
     # when
-    exporter.export_spreadsheet(job_id='test_job_id',
-                                project_uuid=project['uuid']['uuid'],
+    exporter.export_spreadsheet(project_uuid=project['uuid']['uuid'],
                                 submission_uuid=submission['uuid']['uuid'])
 
     # then
@@ -108,8 +107,7 @@ def test_exception_during_export(failing_exporter: SpreadsheetExporter,
     # when
     with pytest.raises(RuntimeError):
         project_uuid = 'test-project-uuid'
-        failing_exporter.export_spreadsheet(job_id='test_job_id',
-                                            project_uuid=project_uuid,
+        failing_exporter.export_spreadsheet(project_uuid=project_uuid,
                                             submission_uuid='test-submission-uuid')
 
 

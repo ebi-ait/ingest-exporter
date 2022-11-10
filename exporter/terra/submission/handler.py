@@ -10,8 +10,8 @@ from .message import SubmissionExportMessage
 
 
 class TerraSubmissionHandler(MessageHandler):
-    def __init__(self, submission_exporter: TerraSubmissionExporter, ingest_service: IngestService):
-        super().__init__('TerraSubmissionExporter')
+    def __init__(self, submission_exporter: TerraSubmissionExporter, ingest_service: IngestService, logger_name: str = __name__):
+        super().__init__(logger_name)
         self.submission_exporter = submission_exporter
         self.ingest_service = ingest_service
 

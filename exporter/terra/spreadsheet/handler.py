@@ -11,10 +11,10 @@ from .message import SpreadsheetExporterMessage
 
 
 class SpreadsheetHandler(MessageHandler):
-    def __init__(self, ingest_service: IngestService, terra_client:  TerraStorageClient):
-        super().__init__('IngestSpreadsheetExporter')
+    def __init__(self, ingest_service: IngestService, terra_client:  TerraStorageClient, logger_name: str = __name__):
+        super().__init__(logger_name)
         self.ingest = ingest_service
-        self.exporter = SpreadsheetExporter(ingest_service, terra_client)
+        self.exporter = SpreadsheetExporter(ingest_service, terra_client, logger_name)
 
     def set_context(self, body: dict) -> SessionContext:
         return SessionContext(
@@ -30,7 +30,7 @@ class SpreadsheetHandler(MessageHandler):
         message = SpreadsheetExporterMessage(body)
         self.logger.info('Received spreadsheet export message, informing ingest')
         self.ingest.set_spreadsheet_generation(message.job_id, ExportContextState.STARTED)
-        self.exporter.export_spreadsheet(message.job_id, message.project_uuid, message.submission_uuid)
+        self.exporter.export_spreadsheet(message.project_uuid, message.submission_uuid)
         self.logger.info('Spreadsheet export finished, informing ingest')
         self.ingest.set_spreadsheet_generation(message.job_id, ExportContextState.COMPLETE)
         self.logger.info('Acknowledging spreadsheet export message')

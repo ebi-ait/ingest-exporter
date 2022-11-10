@@ -7,10 +7,10 @@ from exporter.terra.transfer import TerraTransferClient
 
 
 class TerraSubmissionExporter:
-    def __init__(self, ingest_service: IngestService, terra_client: TerraTransferClient):
+    def __init__(self, ingest_service: IngestService, terra_client: TerraTransferClient, logger_name: str = __name__):
         self.ingest_service = ingest_service
         self.terra_client = terra_client
-        self.logger = logging.getLogger('TerraSubmissionExporter')
+        self.logger = logging.getLogger(logger_name)
 
     def start_data_file_transfer(self, job_id: str, submission_uuid: str, project_uuid: str):
         self.logger.info(f"Getting Submission for data transfer")

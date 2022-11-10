@@ -24,17 +24,3 @@ class ExperimentMessage:
                                      data["exportJobId"])
         except (KeyError, TypeError) as e:
             raise ExperimentMessageParseException(e)
-
-    @staticmethod
-    def as_dict(exp: 'ExperimentMessage') -> Dict:
-        try:
-            return {
-                "documentId": exp.process_id,
-                "documentUuid": exp.process_uuid,
-                "envelopeUuid": exp.submission_uuid,
-                "index": exp.experiment_index,
-                "total": exp.total,
-                "exportJobId": exp.job_id
-            }
-        except (KeyError, TypeError) as e:
-            raise ExperimentMessageParseException(e)

@@ -14,9 +14,10 @@ class TerraExperimentHandler(MessageHandler):
             self,
             experiment_exporter: TerraExperimentExporter,
             ingest_service: IngestService,
-            publish_queue_config: QueueConfig
+            publish_queue_config: QueueConfig,
+            logger_name: str = __name__
     ):
-        super().__init__('TerraExperimentExporter')
+        super().__init__(logger_name)
         self.experiment_exporter = experiment_exporter
         self.ingest_service = ingest_service
         self.publish_queue = publish_queue_config
@@ -27,21 +28,18 @@ class TerraExperimentHandler(MessageHandler):
             context={
                 'submission_uuid': body.get('envelopeUuid'),
                 'export_job_id': body.get('exportJobId'),
-                'project_uuid': body.get('projectUuid')
+                'project_uuid': body.get('projectUuid'),
+                'process_uuid': body.get('documentUuid'),
+                'index': f'{body.get("index")}/{body.get("total")}'
             }
         )
 
     def handle_message(self, body: dict, msg: Message):
         exp = ExperimentMessage.from_dict(body)
-        self.logger.info(f'Received experiment message for process {exp.process_uuid} (index {exp.experiment_index} for submission {exp.submission_uuid})')
+        self.logger.info(f'Received experiment export message.')
         self.experiment_exporter.export(exp.process_uuid)
-        self.logger.info(f'Exported experiment for process uuid {exp.process_uuid} (--index {exp.experiment_index} --total {exp.total} --submission {exp.submission_uuid})')
-        self.log_complete_experiment(msg, exp)
-
-    def log_complete_experiment(self, msg: Message, experiment: ExperimentMessage):
-        self.logger.info(f'Marking successful experiment job_id {experiment.job_id} and process_id {experiment.process_id}')
-        self.ingest_service.create_export_entity(experiment.job_id, experiment.process_id)
-        self.logger.info(f'Creating new message in publish queue for experiment: {experiment}')
-        self.publish_queue.send_message(self.producer, ExperimentMessage.as_dict(experiment))
-        self.logger.info(f'Acknowledging export experiment message: {experiment}')
+        self.logger.info('Experiment export finished, informing ingest')
+        self.ingest_service.create_export_entity(exp.job_id, exp.process_id)
+        self.publish_queue.send_message(self.producer, body)
+        self.logger.info(f'Acknowledging experiment export message')
         msg.ack()
