@@ -16,7 +16,7 @@ class TerraTransferResponder:
         self.ingest = ingest_service
         self.subscription_path = SubscriberClient.subscription_path(gcp_config.gcp_project, gcp_config.gcp_topic)
         topic_path = SubscriberClient.topic_path(gcp_config.gcp_project, gcp_config.gcp_topic)
-        self.logger = SessionContext.register_logger(__name__)
+        self.logger = SessionContext.register_logger("TerraTransferResponder")
 
         with open(gcp_config.gcp_credentials_path) as source:
             credentials_file = json.load(source)
