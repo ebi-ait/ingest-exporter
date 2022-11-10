@@ -15,6 +15,8 @@ from .exporter import TerraSubmissionExporter
 from .handler import TerraSubmissionHandler
 from .responder import TerraTransferResponder
 
+
+LOGGER_NAME = 'TerraSubmissionExporter'
 EXCHANGE = 'ingest.exporter.exchange'
 SUBMISSION_QUEUE_CONFIG = QueueConfig(
     EXCHANGE,
@@ -37,9 +39,9 @@ def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
     terra_client = TerraTransferClient.from_env()
-    terra_exporter = TerraSubmissionExporter(ingest_service, terra_client)
+    terra_exporter = TerraSubmissionExporter(ingest_service, terra_client, LOGGER_NAME)
 
-    handler = TerraSubmissionHandler(terra_exporter, ingest_service)
+    handler = TerraSubmissionHandler(terra_exporter, ingest_service, LOGGER_NAME)
     listener = QueueListener(SUBMISSION_QUEUE_CONFIG, handler)
     connector = QueueConnector(amqp_conn_config, listener)
 
