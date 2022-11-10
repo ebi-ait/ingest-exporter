@@ -1,4 +1,5 @@
 import json
+import logging
 from io import BufferedReader, StringIO
 from time import sleep
 from typing import Union, IO, Any
@@ -8,20 +9,18 @@ from google.api_core.retry import Retry, if_exception_type
 from google.cloud.storage import Client, Blob, Bucket
 from google.oauth2.service_account import Credentials
 
-from exporter.session_context import SessionContext
 from exporter.terra.exceptions import UploadPollingException
 
 Streamable = Union[BufferedReader, StringIO, IO[Any]]
 
 
 class GcsStorage:
-    def __init__(self, project_id: str, credentials_path: str):
+    def __init__(self, project_id: str, credentials_path: str, logger_name: str = __name__):
         with open(credentials_path) as source:
             info = json.load(source)
         credentials: Credentials = Credentials.from_service_account_info(info)
         self.client = Client(project=project_id, credentials=credentials)
-
-        self.logger = SessionContext.register_logger(__name__)
+        self.logger = logging.getLogger(logger_name)
 
     def write(self, bucket_name: str, key: str, data_stream: Streamable):
         bucket: Bucket = self.client.bucket(bucket_name)

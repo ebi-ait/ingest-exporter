@@ -14,11 +14,11 @@ from exporter.terra.storage import TerraStorageClient
 
 
 class SpreadsheetExporter:
-    def __init__(self, ingest_service: IngestService, terra_client: TerraStorageClient):
+    def __init__(self, ingest_service: IngestService, terra_client: TerraStorageClient, logger_name: str = __name__):
         self.ingest = ingest_service
         self.terra = terra_client
         self.downloader = WorkbookDownloader(self.ingest.api)
-        self.logger = logging.getLogger('IngestSpreadsheetExporter')
+        self.logger = logging.getLogger(logger_name)
 
     def export_spreadsheet(self, project_uuid: str, submission_uuid: str):
         self.logger.info("Generating Spreadsheet")

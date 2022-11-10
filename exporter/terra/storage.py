@@ -12,27 +12,23 @@ from exporter.metadata.descriptor import FileDescriptor
 from exporter.metadata.exceptions import MetadataParseException
 from exporter.metadata.resource import MetadataResource
 from exporter.schema.service import SchemaService
-from exporter.utils import log_function_and_params
 
 from .gcs.storage import Streamable, GcsStorage
-
-LOGGER_NAME = 'TerraExperimentExporter'
 
 
 class TerraStorageClient:
     def __init__(self, gcs_storage: GcsStorage, schema_service: SchemaService, bucket_name: str,
-                 key_prefix: str = ''):
+                 key_prefix: str = '', logger_name: str = __name__):
         self.gcs_storage = gcs_storage
         self.schema_service = schema_service
         self.bucket_name = bucket_name
         self.key_prefix = key_prefix
-        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger = logging.getLogger(logger_name)
 
     def write_metadatas(self, metadatas: Iterable[MetadataResource], project_uuid: str):
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
 
-    @log_function_and_params(logging.getLogger(LOGGER_NAME), logging.DEBUG)
     def write_metadata(self, metadata: MetadataResource, project_uuid: str):
         # TODO1: only proceed if lastContentModified > last
         dest_object_key = f'{project_uuid}/metadata/{metadata.concrete_type()}/{metadata.uuid}_{metadata.dcp_version}.json'
@@ -45,7 +41,6 @@ class TerraStorageClient:
         # patch_url = metadata.metadata_json['_links']['self']['href']
         # self.ingest_client.patch(patch_url, {"dcpVersion": metadata.dcp_version})
 
-        self.logger.info(f'Writing metadata for type: {metadata.metadata_type}')
         if metadata.metadata_type == "file":
             self.write_file_descriptor(metadata, project_uuid)
 
@@ -55,14 +50,10 @@ class TerraStorageClient:
         data_stream = self.dict_to_json_stream(links_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
-    @log_function_and_params(logging.getLogger(LOGGER_NAME))
     def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
         file_descriptor_json = self.generate_file_descriptor_json(file_metadata)
-        self.logger.info(
-            f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}, '
-            f'projectUuid: {project_uuid}'
-        )
+        self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}')
         data_stream = self.dict_to_json_stream(file_descriptor_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
@@ -75,7 +66,9 @@ class TerraStorageClient:
         return json_doc
 
     def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
-        self.gcs_storage.write(self.bucket_name, f"{self.key_prefix}/{object_key}", data_stream)
+        file_key = f"{self.key_prefix}/{object_key}"
+        self.logger.info(f'Writing file: {file_key}')
+        self.gcs_storage.write(self.bucket_name, file_key, data_stream)
 
     def generate_links_json(self, link_set: LinkSet) -> Dict:
         json_doc = link_set.to_dict()
