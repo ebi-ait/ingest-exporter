@@ -111,11 +111,11 @@ def test_exception_during_export(failing_exporter: SpreadsheetExporter,
                                             submission_uuid='test-submission-uuid')
 
 
-def test_spreadsheet_metadata_entity(exporter, project, workbook, terra_client):
+def test_spreadsheet_metadata_entity(exporter, project, submission, workbook, terra_client):
     with NamedTemporaryFile() as spreadsheet_file:
         workbook.save(spreadsheet_file.name)
         project_metadata = MetadataResource.from_dict(project)
-        file_metadata = exporter.create_supplementary_file_metadata(spreadsheet_file, project_metadata)
+        file_metadata = exporter.create_supplementary_file_metadata(spreadsheet_file, project_metadata, submission['uuid']['uuid'])
         check_file_metadata(project_metadata=project_metadata, file_metadata=file_metadata, terra_client=terra_client)
 
 
