@@ -16,7 +16,7 @@ from exporter.schema.resource import SchemaResource
 from exporter.terra.spreadsheet.exporter import SpreadsheetExporter
 from exporter.terra.storage import TerraStorageClient
 
-MetadataFile = namedtuple('MetadataFile', ['uuid', 'filename_prefix', 'filename_suffix', 'data_uuid'])
+MetadataFile = namedtuple('MetadataFile', ['uuid', 'filename_uuid_or_shortname', 'filename_dcp_version', 'data_uuid'])
 
 
 @pytest.fixture
@@ -171,15 +171,15 @@ def test_spreadsheet_metadata_entity(supplementary_file):
     pass
 
 
-def test_filenames_differ_with_changed_dcp_version(supplementary_file, updated_supplementary_file):
+def test_metadata_uuids_match_with_changed_dcp_version(supplementary_file, updated_supplementary_file):
     initial = get_file_info(supplementary_file)
     updated = get_file_info(updated_supplementary_file)
 
     assert_that(initial.uuid).is_equal_to(updated.uuid)
     assert_that(initial.data_uuid).is_equal_to(updated.data_uuid)
-    assert_that(initial.filename_prefix).is_equal_to(updated.filename_prefix)
 
-    assert_that(initial.filename_suffix).is_not_equal_to(updated.filename_suffix)
+    assert_that(initial.filename_uuid_or_shortname).is_equal_to(updated.filename_uuid_or_shortname)
+    assert_that(initial.filename_dcp_version).is_not_equal_to(updated.filename_dcp_version)
 
 
 def test_metadata_uuids_differ_with_new_submission(supplementary_file, new_supplementary_file):
@@ -189,7 +189,8 @@ def test_metadata_uuids_differ_with_new_submission(supplementary_file, new_suppl
     assert_that(initial.uuid).is_not_equal_to(new.uuid)
     assert_that(initial.data_uuid).is_not_equal_to(new.data_uuid)
 
-    assert_that(initial.filename_prefix).is_equal_to(new.filename_prefix)
+    assert_that(initial.filename_uuid_or_shortname).is_equal_to(new.filename_uuid_or_shortname)
+    assert_that(initial.filename_dcp_version).is_not_equal_to(new.filename_dcp_version)
 
 
 def check_spreadsheet_copied_to_terra(actual_file_metadata: MetadataResource,
