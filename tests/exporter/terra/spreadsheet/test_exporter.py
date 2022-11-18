@@ -7,6 +7,7 @@ from unittest.mock import Mock, ANY
 import pytest
 from assertpy import assert_that
 from hca_ingest.api.ingestapi import IngestApi
+from hca_ingest.utils.date import date_to_json_string, parse_date_string
 from openpyxl.workbook import Workbook
 
 from exporter.ingest.service import IngestService
@@ -83,7 +84,7 @@ def project(project_dict) -> MetadataResource:
 
 @pytest.fixture
 def updated_project(project_dict) -> MetadataResource:
-    project_dict['dcpVersion'] = datetime.utcnow().isoformat() + 'Z'
+    project_dict['dcpVersion'] = date_to_json_string(datetime.utcnow())
     return MetadataResource.from_dict(project_dict)
 
 
@@ -231,7 +232,7 @@ def check_file_metadata(project_metadata: MetadataResource, terra_client=None, f
     assert_that(filename) \
         .starts_with(short_name if short_name else project_metadata.uuid) \
         .contains('_metadata_') \
-        .contains(datetime.fromisoformat(file_metadata.dcp_version.removesuffix('Z')).strftime('%d-%m-%Y')) \
+        .contains(parse_date_string(file_metadata.dcp_version).strftime('%d-%m-%Y')) \
         .ends_with('.xlsx')
     TerraStorageClient.validate_json_doc(file_metadata.get_content())
     TerraStorageClient.update_schema_info_and_validate(
