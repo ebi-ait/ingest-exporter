@@ -1,11 +1,12 @@
 import hashlib
 import logging
 import uuid
+from datetime import datetime
 from tempfile import NamedTemporaryFile as TempFile
 
 import crc32c
 from hca_ingest.downloader.workbook import WorkbookDownloader
-from hca_ingest.utils.date import parse_date_string
+from hca_ingest.utils.date import date_to_json_string
 
 from exporter.graph.info.supplementary_files import SupplementaryFilesInfo
 from exporter.graph.experiment import ExperimentGraph
@@ -21,7 +22,7 @@ class SpreadsheetExporter:
         self.downloader = WorkbookDownloader(self.ingest.api)
         self.logger = logging.getLogger(logger_name)
 
-    def export_spreadsheet(self, project_uuid: str, submission_uuid: str):
+    def export_spreadsheet(self, project_uuid: str, submission_uuid: str, export_date: datetime):
         self.logger.info("Generating Spreadsheet")
         workbook = self.downloader.get_workbook_from_submission(submission_uuid)
 
@@ -30,7 +31,7 @@ class SpreadsheetExporter:
         with TempFile() as spreadsheet_file:
             workbook.save(spreadsheet_file.name)
             # todo: make it available in broker as well.
-            file_meta = self.create_supplementary_file_metadata(spreadsheet_file, project_meta, submission_uuid)
+            file_meta = self.create_supplementary_file_metadata(spreadsheet_file, project_meta, submission_uuid, export_date)
             self.logger.info("Writing to Terra")
             self.write_to_terra(spreadsheet_file, project_meta, file_meta)
 
@@ -53,10 +54,10 @@ class SpreadsheetExporter:
             project_meta.uuid
         )
 
-    def create_supplementary_file_metadata(self, spreadsheet_file: TempFile, project_meta: Metadata, submission_uuid: str) -> Metadata:
+    def create_supplementary_file_metadata(self, spreadsheet_file: TempFile, project_meta: Metadata, submission_uuid: str, export_date: datetime) -> Metadata:
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
         short_name = project_meta.metadata_json.get('project_core', {}).get('project_short_name', project_meta.uuid)
-        date_suffix = parse_date_string(project_meta.dcp_version).strftime('%d-%m-%Y')
+        date_suffix = export_date.strftime('%d-%m-%Y')
         filename = f'{short_name}_metadata_{date_suffix}.xlsx'
         spreadsheet_file.seek(0)
         spreadsheet_bytes = spreadsheet_file.read()
@@ -79,7 +80,7 @@ class SpreadsheetExporter:
                 "s3_etag": 'n/a - not in s3'
             },
             "uuid": {"uuid": metadata_uuid},
-            "dcpVersion": project_meta.dcp_version,
+            "dcpVersion": date_to_json_string(export_date),
             "type": "file",
             "submissionDate": project_meta.full_resource['submissionDate'],
             "updateDate": project_meta.full_resource['updateDate'],
