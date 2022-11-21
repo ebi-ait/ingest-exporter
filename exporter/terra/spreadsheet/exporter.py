@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile as TempFile
 
 import crc32c
 from hca_ingest.downloader.workbook import WorkbookDownloader
+from hca_ingest.utils.date import parse_date_string
 
 from exporter.graph.info.supplementary_files import SupplementaryFilesInfo
 from exporter.graph.experiment import ExperimentGraph
@@ -23,12 +24,13 @@ class SpreadsheetExporter:
     def export_spreadsheet(self, project_uuid: str, submission_uuid: str):
         self.logger.info("Generating Spreadsheet")
         workbook = self.downloader.get_workbook_from_submission(submission_uuid)
+
         self.logger.info("Generating Spreadsheet Metadata")
         project_meta = self.ingest.get_metadata(entity_type='projects', uuid=project_uuid)
         with TempFile() as spreadsheet_file:
             workbook.save(spreadsheet_file.name)
             # todo: make it available in broker as well.
-            file_meta = self.create_supplementary_file_metadata(spreadsheet_file, project_meta)
+            file_meta = self.create_supplementary_file_metadata(spreadsheet_file, project_meta, submission_uuid)
             self.logger.info("Writing to Terra")
             self.write_to_terra(spreadsheet_file, project_meta, file_meta)
 
@@ -51,17 +53,19 @@ class SpreadsheetExporter:
             project_meta.uuid
         )
 
-    def create_supplementary_file_metadata(self, spreadsheet_file: TempFile, project_meta: Metadata) -> Metadata:
+    def create_supplementary_file_metadata(self, spreadsheet_file: TempFile, project_meta: Metadata, submission_uuid: str) -> Metadata:
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
-        filename = f'metadata_{project_meta.uuid}.xlsx'
+        short_name = project_meta.metadata_json.get('project_core', {}).get('project_short_name', project_meta.uuid)
+        date_suffix = parse_date_string(project_meta.dcp_version).strftime('%d-%m-%Y')
+        filename = f'{short_name}_metadata_{date_suffix}.xlsx'
         spreadsheet_file.seek(0)
         spreadsheet_bytes = spreadsheet_file.read()
         spreadsheet_size = len(spreadsheet_bytes)
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
         crc = f'{crc32c.crc32c(spreadsheet_bytes):08x}'
-        metadata_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_metadata'))
-        datafile_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{filename}_data'))
+        metadata_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{submission_uuid}_metadata'))
+        datafile_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{submission_uuid}_data'))
         return Metadata.from_dict({
             "fileName": filename,
             "dataFileUuid": datafile_uuid,
