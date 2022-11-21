@@ -65,10 +65,10 @@ class TerraStorageClient:
         TerraStorageClient.update_schema_info_and_validate(json_doc, latest_schema)
         return json_doc
 
-    def write_to_staging_bucket(self, object_key: str, data_stream: Streamable):
+    def write_to_staging_bucket(self, object_key: str, data_stream: Streamable, overwrite=False):
         file_key = f"{self.key_prefix}/{object_key}"
-        self.logger.info(f'Writing file: {file_key}')
-        self.gcs_storage.write(self.bucket_name, file_key, data_stream)
+        self.logger.info(f'{"Overwriting" if overwrite else "Writing"} file: {file_key}')
+        self.gcs_storage.write(self.bucket_name, file_key, data_stream, overwrite)
 
     def generate_links_json(self, link_set: LinkSet) -> Dict:
         json_doc = link_set.to_dict()

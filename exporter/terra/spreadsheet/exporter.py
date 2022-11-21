@@ -41,7 +41,8 @@ class SpreadsheetExporter:
         spreadsheet_file.seek(0)
         self.terra.write_to_staging_bucket(
             object_key=f'{project_meta.uuid}/data/{file_meta.full_resource["fileName"]}',
-            data_stream=spreadsheet_file
+            data_stream=spreadsheet_file,
+            overwrite=True
         )
 
     def write_links(self, file_meta: Metadata, project_meta: Metadata):

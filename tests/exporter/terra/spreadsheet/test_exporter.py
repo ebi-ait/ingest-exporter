@@ -195,7 +195,8 @@ def check_spreadsheet_copied_to_terra(actual_file_metadata: MetadataResource,
                                       project: MetadataResource, terra_client):
     terra_client.write_to_staging_bucket.assert_called_with(
         object_key=f'{project.uuid}/data/{actual_file_metadata.full_resource["fileName"]}',
-        data_stream=ANY
+        data_stream=ANY,
+        overwrite=True
     )
 
 
