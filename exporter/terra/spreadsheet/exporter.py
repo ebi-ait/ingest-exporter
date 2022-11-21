@@ -55,9 +55,7 @@ class SpreadsheetExporter:
 
     def create_supplementary_file_metadata(self, spreadsheet_file: TempFile, project_meta: Metadata, submission_uuid: str) -> Metadata:
         schema_url = self.ingest.api.get_latest_schema_url('type', 'file', 'supplementary_file')
-        short_name = project_meta.metadata_json.get('project_core', {}).get('project_short_name')
-        if not short_name:
-            short_name = project_meta.uuid
+        short_name = project_meta.metadata_json.get('project_core', {}).get('project_short_name', project_meta.uuid)
         date_suffix = parse_date_string(project_meta.dcp_version).strftime('%d-%m-%Y')
         filename = f'{short_name}_metadata_{date_suffix}.xlsx'
         spreadsheet_file.seek(0)
