@@ -82,4 +82,5 @@ class IngestService:
 
     def __set_export_job_context_state(self, job_id: str, context: str, state: ExportContextState) -> ExportJob:
         job_url = self.get_job_url(job_id)
-        return self.api.patch(f'{job_url}/context', json={context: state.value}).json()
+        job_json = self.api.patch(f'{job_url}/context', json={context: state.value}).json()
+        return ExportJob(job_json)
