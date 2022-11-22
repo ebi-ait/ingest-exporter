@@ -17,8 +17,6 @@ from exporter.schema.resource import SchemaResource
 from exporter.terra.spreadsheet.exporter import SpreadsheetExporter
 from exporter.terra.storage import TerraStorageClient
 
-MetadataFile = namedtuple('MetadataFile', ['uuid', 'filename_uuid_or_shortname', 'filename_dcp_version', 'data_uuid'])
-
 
 @pytest.fixture
 def ingest_service(ingest_api):
@@ -33,6 +31,16 @@ def ingest_api(mocker, submission_dict, project_dict):
     ingest_api.get_latest_schema_url.return_value = 'https://schema.humancellatlas.org/type/file/2.5.0/supplementary_file'
     ingest_api.get_entity_by_uuid.return_value = project_dict
     return ingest_api
+
+
+@pytest.fixture
+def export_date():
+    return datetime(2022, 5, 29, 13, 51, 8, 593000)
+
+
+@pytest.fixture
+def new_export_date():
+    return datetime.now()
 
 
 @pytest.fixture
@@ -83,24 +91,18 @@ def project(project_dict) -> MetadataResource:
 
 
 @pytest.fixture
-def updated_project(project_dict) -> MetadataResource:
-    project_dict['dcpVersion'] = date_to_json_string(datetime.utcnow())
-    return MetadataResource.from_dict(project_dict)
+def initial_supplementary_file(terra_client, exporter, project, submission_uuid, export_date):
+    return create_supplementary_file(terra_client, exporter, project, submission_uuid, export_date)
 
 
 @pytest.fixture
-def supplementary_file(exporter, project, submission_uuid, terra_client):
-    return create_supplementary_file(exporter, project, submission_uuid, terra_client)
+def supplementary_file_from_new_export(terra_client, exporter, project, submission_uuid, new_export_date):
+    return create_supplementary_file(terra_client, exporter, project, submission_uuid, new_export_date)
 
 
 @pytest.fixture
-def updated_supplementary_file(exporter, updated_project, submission_uuid, terra_client):
-    return create_supplementary_file(exporter, updated_project, submission_uuid, terra_client)
-
-
-@pytest.fixture
-def new_supplementary_file(exporter, updated_project, new_submission_uuid, terra_client):
-    return create_supplementary_file(exporter, updated_project, new_submission_uuid, terra_client)
+def supplementary_file_from_new_submission(terra_client, exporter, project, new_submission_uuid, new_export_date):
+    return create_supplementary_file(terra_client, exporter, project, new_submission_uuid, new_export_date)
 
 
 @pytest.fixture
@@ -133,87 +135,95 @@ def failing_exporter(ingest_service, terra_client, mocker):
 def test_happy_path(exporter: SpreadsheetExporter,
                     ingest_service: Mock,
                     terra_client: Mock,
-                    project,
-                    submission_uuid,
+                    project: MetadataResource,
+                    submission_uuid: str,
+                    export_date: datetime,
                     caplog):
     # given
     # uses an exporter fixture
 
     # when
-    exporter.export_spreadsheet(project_uuid=project.uuid,
-                                submission_uuid=submission_uuid)
+    exporter.export_spreadsheet(project.uuid, submission_uuid, export_date)
 
     # then
-    actual_file_metadata = check_file_metadata(project, terra_client)
-    check_generated_links(actual_file_metadata, project, terra_client)
+    actual_file_metadata = check_file_metadata(project, terra_client=terra_client)
+    check_generated_links(terra_client, project, actual_file_metadata, export_date)
     check_spreadsheet_copied_to_terra(actual_file_metadata, project, terra_client)
     assert "Generating Spreadsheet" in caplog.text
 
 
-def test_exception_during_export(failing_exporter: SpreadsheetExporter, project_uuid, submission_uuid, caplog):
+def test_exception_during_export(failing_exporter: SpreadsheetExporter, project_uuid, submission_uuid, export_date: datetime, caplog):
     # given an exception is thrown while generating the spreadsheet
 
     # when
     with pytest.raises(RuntimeError):
-        failing_exporter.export_spreadsheet(project_uuid=project_uuid,
-                                            submission_uuid=submission_uuid)
+        failing_exporter.export_spreadsheet(project_uuid, submission_uuid, export_date)
 
 
-def create_supplementary_file(exporter, project, submission_uuid, terra_client):
+def create_supplementary_file(terra_client, exporter, project, submission_uuid, export_date):
     with NamedTemporaryFile() as spreadsheet_file:
         file = exporter.create_supplementary_file_metadata(spreadsheet_file,
                                                            project,
-                                                           submission_uuid)
-        check_file_metadata(project, terra_client, file)
+                                                           submission_uuid,
+                                                           export_date)
+        check_file_metadata(project, file, terra_client)
         return file
 
 
-def test_spreadsheet_metadata_entity(supplementary_file):
+def test_spreadsheet_metadata_entity(initial_supplementary_file):
     pass
 
 
-def test_metadata_uuids_match_with_changed_dcp_version(supplementary_file, updated_supplementary_file):
-    initial = get_file_info(supplementary_file)
-    updated = get_file_info(updated_supplementary_file)
-
-    assert_that(initial.uuid).is_equal_to(updated.uuid)
-    assert_that(initial.data_uuid).is_equal_to(updated.data_uuid)
-
-    assert_that(initial.filename_uuid_or_shortname).is_equal_to(updated.filename_uuid_or_shortname)
-    assert_that(initial.filename_dcp_version).is_not_equal_to(updated.filename_dcp_version)
+def test_spreadsheet_metadata_on_submission_update(initial_supplementary_file, supplementary_file_from_new_export):
+    check_file_prefix_matches(initial_supplementary_file, supplementary_file_from_new_export)
+    check_uuids_match(initial_supplementary_file, supplementary_file_from_new_export)
+    check_dates_differ(initial_supplementary_file, supplementary_file_from_new_export)
 
 
-def test_metadata_uuids_differ_with_new_submission(supplementary_file, new_supplementary_file):
-    initial = get_file_info(supplementary_file)
-    new = get_file_info(new_supplementary_file)
+def test_spreadsheet_metadata_on_new_submission(initial_supplementary_file, supplementary_file_from_new_submission):
+    check_file_prefix_matches(initial_supplementary_file, supplementary_file_from_new_submission)
+    check_uuids_differ(initial_supplementary_file, supplementary_file_from_new_submission)
+    check_dates_differ(initial_supplementary_file, supplementary_file_from_new_submission)
 
+
+def check_file_prefix_matches(initial, new):
+    assert_that(get_file_info(initial)['project_shortname_or_uuid']).is_equal_to(get_file_info(new)['project_shortname_or_uuid'])
+
+
+def check_uuids_match(initial, new):
+    assert_that(initial.uuid).is_equal_to(new.uuid)
+    assert_that(initial.full_resource['dataFileUuid']).is_equal_to(new.full_resource['dataFileUuid'])
+
+
+def check_uuids_differ(initial, new):
     assert_that(initial.uuid).is_not_equal_to(new.uuid)
-    assert_that(initial.data_uuid).is_not_equal_to(new.data_uuid)
+    assert_that(initial.full_resource['dataFileUuid']).is_not_equal_to(new.full_resource['dataFileUuid'])
 
-    assert_that(initial.filename_uuid_or_shortname).is_equal_to(new.filename_uuid_or_shortname)
-    assert_that(initial.filename_dcp_version).is_not_equal_to(new.filename_dcp_version)
+
+def check_dates_differ(initial, new):
+    assert_that(initial.dcp_version).is_not_equal_to(new.dcp_version)
+    assert_that(get_file_info(initial)['date']).is_not_equal_to(get_file_info(new)['date'])
 
 
 def check_spreadsheet_copied_to_terra(actual_file_metadata: MetadataResource,
                                       project: MetadataResource, terra_client):
     terra_client.write_to_staging_bucket.assert_called_with(
         object_key=f'{project.uuid}/data/{actual_file_metadata.full_resource["fileName"]}',
-        data_stream=ANY
+        data_stream=ANY,
+        overwrite=True
     )
 
 
-def check_generated_links(actual_file_metadata: MetadataResource,
-                          project_metadata: MetadataResource | dict,
-                          terra_client):
-    if isinstance(project_metadata, dict):
-        project_metadata = MetadataResource.from_dict(project_metadata)
-    terra_client.write_links.assert_called_with(ANY,
-                                                actual_file_metadata.uuid,
-                                                project_metadata.dcp_version,
-                                                project_metadata.uuid)
+def check_generated_links(terra_client, project_metadata: MetadataResource, file_metadata: MetadataResource, export_date: datetime):
+    terra_client.write_links.assert_called_with(
+        ANY,
+        file_metadata.uuid,
+        date_to_json_string(export_date),
+        project_metadata.uuid,
+    )
 
 
-def check_file_metadata(project_metadata: MetadataResource, terra_client=None, file_metadata=None):
+def check_file_metadata(project_metadata: MetadataResource, file_metadata=None, terra_client=None) -> MetadataResource:
     if terra_client and not file_metadata:
         terra_client.write_metadata.assert_called_with(ANY, project_metadata.uuid)
         if file_metadata:
@@ -241,7 +251,9 @@ def check_file_metadata(project_metadata: MetadataResource, terra_client=None, f
     return file_metadata
 
 
-def get_file_info(file: MetadataResource) -> MetadataFile:
-    filename = file.full_resource['fileName']
-    name_split = filename.split('_metadata_')
-    return MetadataFile(file.uuid, name_split[0],  name_split[1], file.full_resource['dataFileUuid'])
+def get_file_info(file: MetadataResource):
+    name_split = file.full_resource['fileName'].split('_metadata_')
+    return {
+        'project_shortname_or_uuid': name_split[0],
+        'date': name_split[1]
+    }

@@ -66,13 +66,12 @@ class IngestService:
         find_entities_by_status_url = f'{entities_url}?status={ExportJobState.EXPORTED.value}'
         return int(self.api.get(find_entities_by_status_url).json()["page"]["totalElements"])
 
-    def set_data_file_transfer(self, export_job_id: str, state: ExportContextState):
-        self.__set_export_job_context_state(export_job_id, "dataFileTransfer", state)
+    def set_data_file_transfer(self, export_job_id: str, state: ExportContextState) -> ExportJob:
+        return self.__set_export_job_context_state(export_job_id, "dataFileTransfer", state)
 
-    def set_spreadsheet_generation(self, export_job_id: str, state: ExportContextState):
-        self.__set_export_job_context_state(export_job_id, "spreadsheetGeneration", state)
+    def set_spreadsheet_generation(self, export_job_id: str, state: ExportContextState) -> ExportJob:
+        return self.__set_export_job_context_state(export_job_id, "spreadsheetGeneration", state)
 
-    def __set_export_job_context_state(self, job_id: str, context: str, state: ExportContextState):
+    def __set_export_job_context_state(self, job_id: str, context: str, state: ExportContextState) -> ExportJob:
         job_url = self.get_job_url(job_id)
-        self.api.patch(f'{job_url}/context', json={context: state.value})
-
+        return self.api.patch(f'{job_url}/context', json={context: state.value}).json()

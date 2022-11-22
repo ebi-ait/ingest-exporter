@@ -22,9 +22,19 @@ class GcsStorage:
         self.client = Client(project=project_id, credentials=credentials)
         self.logger = logging.getLogger(logger_name)
 
-    def write(self, bucket_name: str, key: str, data_stream: Streamable):
+    def write(self, bucket_name: str, key: str, data_stream: Streamable, overwrite=False):
         bucket: Bucket = self.client.bucket(bucket_name)
         blob: Blob = bucket.blob(key, chunk_size=1024 * 256 * 20)
+        if overwrite:
+            self.__overwrite(blob, data_stream)
+        else:
+            self.__write(blob, data_stream)
+
+    def __overwrite(self, blob: Blob, data_stream: Streamable):
+        blob.upload_from_file(data_stream)
+        self.__mark_complete(blob)
+
+    def __write(self, blob: Blob, data_stream: Streamable):
         try:
             if not blob.exists():
                 blob.upload_from_file(data_stream, if_generation_match=0)

@@ -1,6 +1,9 @@
 from dataclasses import dataclass, InitVar, field
+from datetime import datetime
 from enum import Enum
 from typing import Dict, List
+
+from hca_ingest.utils.date import parse_date_string
 
 
 @dataclass
@@ -50,13 +53,15 @@ class ExportContextState(Enum):
 class ExportJob:
     job: InitVar[dict]
     job_id: str = field(init=False)
-    num_expected_assays: int = field(init=False, default=0)
+    created_date: datetime = field(init=False)
     export_state: ExportJobState = field(init=False)
+    num_expected_assays: int = field(init=False, default=0)
     data_file_transfer: ExportContextState = field(init=False, default=ExportContextState.NOT_STARTED)
     spreadsheet_generation: ExportContextState = field(init=False, default=ExportContextState.NOT_STARTED)
 
     def __post_init__(self, job: dict):
         self.job_id = str(job["_links"]["self"]["href"]).split("/")[-1]
+        self.created_date = parse_date_string(job["createdDate"])
         self.export_state = ExportJobState(job["status"].upper())
         if 'context' in job:
             if 'totalAssayCount' in job['context']:
