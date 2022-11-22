@@ -55,6 +55,14 @@ class IngestService:
     def get_submission(self, submission_uuid):
         return self.api.get_submission_by_uuid(submission_uuid)
 
+    def get_submission_dcp_version_from_uuid(self, submission_uuid: str) -> str:
+        submission = self.get_submission(submission_uuid)
+        return self.get_submission_dcp_version(submission)
+
+    def get_submission_dcp_version(self, submission: dict) -> str:
+        url = self.api.get_link_from_resource(submission, 'contentLastUpdated')
+        return self.api.get(url).json()
+
     def project_for_process(self, process: MetadataResource) -> MetadataResource:
         return MetadataResource.from_dict(list(self.api.get_related_entities(
             "projects",
@@ -74,4 +82,5 @@ class IngestService:
 
     def __set_export_job_context_state(self, job_id: str, context: str, state: ExportContextState) -> ExportJob:
         job_url = self.get_job_url(job_id)
-        return self.api.patch(f'{job_url}/context', json={context: state.value}).json()
+        job_json = self.api.patch(f'{job_url}/context', json={context: state.value}).json()
+        return ExportJob(job_json)
