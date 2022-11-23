@@ -54,7 +54,7 @@ class TerraTransferResponder:
             if not self.ingest.job_exists_with_submission(export_job_id):
                 self.logger.warning(f'Job or submission does not exist on this environment.')
                 return message.nack()
-            self.hande_data_transfer_complete(message, export_job_id)
+            self.handle_data_transfer_complete(message, export_job_id)
 
     def hande_data_transfer_complete(self, message: Message, export_job_id: str):
         self.logger.info(f'Received message that data transfer is complete, informing ingest')
