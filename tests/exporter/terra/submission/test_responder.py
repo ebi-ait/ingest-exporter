@@ -1,6 +1,6 @@
 import unittest
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 from google.cloud.pubsub_v1 import SubscriberClient
 from google.cloud.pubsub_v1.subscriber.message import Message
@@ -25,19 +25,9 @@ class TestTerraTransferResponder(unittest.TestCase):
     def setUp(self) -> None:
         self.project = 'project'
         self.topic = 'topic'
-        self.mock_exists = MagicMock(return_value=True)
-        self.mock_set_transfer = MagicMock()
-        mock_ingest = MagicMock(spec=IngestService)
-        mock_ingest.job_exists = self.mock_exists
-        mock_ingest.set_data_file_transfer = self.mock_set_transfer
-
-        self.responder = MockTerraTransferResponder(mock_ingest, self.project, self.topic)
-
-        self.msg_ack = MagicMock()
-        self.msg_nack = MagicMock()
-        self.message = MagicMock(spec=Message)
-        self.message.ack = self.msg_ack
-        self.message.nack = self.msg_nack
+        self.ingest = Mock(spec=IngestService)
+        self.message = Mock(spec=Message)
+        self.responder = MockTerraTransferResponder(self.ingest, self.project, self.topic)
 
     def test_handle_message(self):
         # Given
@@ -50,10 +40,10 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_exists.assert_called_once_with(export_id)
-        self.mock_set_transfer.assert_called_once_with(export_id, ExportContextState.COMPLETE)
-        self.msg_ack.assert_called_once()
-        self.msg_nack.assert_not_called()
+        self.ingest.job_exists_with_submission.assert_called_once_with(export_id)
+        self.ingest.set_data_file_transfer.assert_called_once_with(export_id, ExportContextState.COMPLETE)
+        self.message.ack.assert_called_once()
+        self.message.nack.assert_not_called()
 
     def test_handle_empty_message_attributes(self):
         # Given
@@ -63,10 +53,10 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_exists.assert_not_called()
-        self.mock_set_transfer.assert_not_called()
-        self.msg_ack.assert_not_called()
-        self.msg_nack.assert_called_once()
+        self.ingest.job_exists_with_submission.assert_not_called()
+        self.ingest.set_data_file_transfer.assert_not_called()
+        self.message.ack.assert_not_called()
+        self.message.nack.assert_called_once()
 
     def test_handle_message_without_transfer_job(self):
         # Given
@@ -77,10 +67,10 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_exists.assert_not_called()
-        self.mock_set_transfer.assert_not_called()
-        self.msg_ack.assert_not_called()
-        self.msg_nack.assert_called_once()
+        self.ingest.job_exists_with_submission.assert_not_called()
+        self.ingest.set_data_file_transfer.assert_not_called()
+        self.message.ack.assert_not_called()
+        self.message.nack.assert_called_once()
 
     def test_handle_message_with_malformed_transfer_job(self):
         # Given
@@ -93,14 +83,14 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_exists.assert_not_called()
-        self.mock_set_transfer.assert_not_called()
-        self.msg_ack.assert_not_called()
-        self.msg_nack.assert_called_once()
+        self.ingest.job_exists_with_submission.assert_not_called()
+        self.ingest.set_data_file_transfer.assert_not_called()
+        self.message.ack.assert_not_called()
+        self.message.nack.assert_called_once()
 
     def test_handle_message_for_other_server(self):
         # Given
-        self.mock_exists.return_value = False
+        self.ingest.job_exists_with_submission.return_value = False
 
         export_id = str(uuid.uuid4())
         self.message.attributes = {
@@ -112,7 +102,7 @@ class TestTerraTransferResponder(unittest.TestCase):
         self.responder.handle_message(self.message)
 
         # Then
-        self.mock_exists.assert_called_once_with(export_id)
-        self.mock_set_transfer.assert_not_called()
-        self.msg_ack.assert_not_called()
-        self.msg_nack.assert_called_once()
+        self.ingest.job_exists_with_submission.assert_called_once_with(export_id)
+        self.ingest.set_data_file_transfer.assert_not_called()
+        self.message.ack.assert_not_called()
+        self.message.nack.assert_called_once()
