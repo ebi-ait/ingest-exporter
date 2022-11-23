@@ -56,7 +56,7 @@ class TerraTransferResponder:
                 return message.nack()
             self.handle_data_transfer_complete(message, export_job_id)
 
-    def hande_data_transfer_complete(self, message: Message, export_job_id: str):
+    def handle_data_transfer_complete(self, message: Message, export_job_id: str):
         self.logger.info(f'Received message that data transfer is complete, informing ingest')
         self.ingest.set_data_file_transfer(export_job_id, ExportContextState.COMPLETE)
         self.logger.info(f'Acknowledging data transfer complete message')
