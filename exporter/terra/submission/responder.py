@@ -50,13 +50,13 @@ class TerraTransferResponder:
             self.logger.error(f'Could not parse message: {message.attributes}')
             return message.nack()
         export_job_id = transfer_name.replace('transferJobs/', '')
-        if not self.ingest.job_exists(export_job_id):
-            self.logger.warning(f'Job does not exist on this environment, this could be because the terra staging environment is used for both dev and staging ingest: {export_job_id}')
-            return message.nack()
         with SessionContext(logger=self.logger, context={'export_job_id': export_job_id}):
-            self.hande_data_transfer_complete(message, export_job_id)
+            if not self.ingest.job_exists_with_submission(export_job_id):
+                self.logger.warning(f'Job or submission does not exist on this environment.')
+                return message.nack()
+            self.handle_data_transfer_complete(message, export_job_id)
 
-    def hande_data_transfer_complete(self, message: Message, export_job_id: str):
+    def handle_data_transfer_complete(self, message: Message, export_job_id: str):
         self.logger.info(f'Received message that data transfer is complete, informing ingest')
         self.ingest.set_data_file_transfer(export_job_id, ExportContextState.COMPLETE)
         self.logger.info(f'Acknowledging data transfer complete message')

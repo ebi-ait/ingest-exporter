@@ -38,10 +38,10 @@ class IngestService:
         job_url = self.get_job_url(job_id)
         return ExportJob(self.api.get(job_url).json())
 
-    def job_exists(self, job_id: str) -> bool:
-        job_url = self.get_job_url(job_id)
-        response = self.api.session.get(job_url, headers=self.api.get_headers())
-        return response.ok
+    def job_exists_with_submission(self, job_id) -> bool:
+        job_dict = self.__get_job_if_exists(job_id)
+        submission_link = self.api.get_link_from_resource(job_dict, "submission")
+        return submission_link and not submission_link.endswith('/submissionEnvelopes')
 
     def get_job_url(self, job_id: str) -> str:
         return self.api.get_full_url(f'/exportJobs/{job_id}')
@@ -84,3 +84,10 @@ class IngestService:
         job_url = self.get_job_url(job_id)
         job_json = self.api.patch(f'{job_url}/context', json={context: state.value}).json()
         return ExportJob(job_json)
+
+    def __get_job_if_exists(self, job_id: str):
+        job_url = self.get_job_url(job_id)
+        response = self.api.session.get(job_url, headers=self.api.get_headers())
+        if response.ok:
+            return response.json()
+        return {}
