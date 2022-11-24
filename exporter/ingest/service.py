@@ -35,8 +35,11 @@ class IngestService:
         self.api.patch(job_url, json={"status": ExportJobState.EXPORTED.value})
 
     def get_job(self, job_id: str) -> ExportJob:
-        job_url = self.get_job_url(job_id)
-        return ExportJob(self.api.get(job_url).json())
+        job_dict = self.__get_job_if_exists(job_id)
+        return ExportJob(job_dict)
+
+    def job_exists(self, job_id) -> bool:
+        return True if self.__get_job_if_exists(job_id) else False
 
     def job_exists_with_submission(self, job_id) -> bool:
         job_dict = self.__get_job_if_exists(job_id)

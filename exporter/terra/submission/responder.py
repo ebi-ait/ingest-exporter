@@ -51,9 +51,12 @@ class TerraTransferResponder:
             return message.nack()
         export_job_id = transfer_name.replace('transferJobs/', '')
         with SessionContext(logger=self.logger, context={'export_job_id': export_job_id}):
-            if not self.ingest.job_exists_with_submission(export_job_id):
-                self.logger.warning(f'Job or submission does not exist on this environment.')
+            if not self.ingest.job_exists(export_job_id):
+                self.logger.warning(f'Export Job does not exist on this environment, this could be because the terra staging environment is used for both dev and staging ingest')
                 return message.nack()
+            if not self.ingest.job_exists_with_submission(export_job_id):
+                self.logger.info(f'Export Job linked Submission deleted. Acknowledging message')
+                return message.ack()
             self.handle_data_transfer_complete(message, export_job_id)
 
     def handle_data_transfer_complete(self, message: Message, export_job_id: str):

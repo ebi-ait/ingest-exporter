@@ -1,5 +1,5 @@
-import unittest
 import uuid
+import pytest
 from unittest.mock import Mock
 
 from google.cloud.pubsub_v1 import SubscriberClient
@@ -21,88 +21,103 @@ class MockTerraTransferResponder(TerraTransferResponder):
         self.credentials = None
 
 
-class TestTerraTransferResponder(unittest.TestCase):
-    def setUp(self) -> None:
-        self.project = 'project'
-        self.topic = 'topic'
-        self.ingest = Mock(spec=IngestService)
-        self.message = Mock(spec=Message)
-        self.responder = MockTerraTransferResponder(self.ingest, self.project, self.topic)
+@pytest.fixture
+def gcp_project():
+    return 'project'
 
-    def test_handle_message(self):
-        # Given
-        export_id = str(uuid.uuid4())
-        self.message.attributes = {
-            "eventType": "TRANSFER_OPERATION_SUCCESS",
-            "transferJobName": "transferJobs/" + export_id
-        }
-        # when
-        self.responder.handle_message(self.message)
 
-        # Then
-        self.ingest.job_exists_with_submission.assert_called_once_with(export_id)
-        self.ingest.set_data_file_transfer.assert_called_once_with(export_id, ExportContextState.COMPLETE)
-        self.message.ack.assert_called_once()
-        self.message.nack.assert_not_called()
+@pytest.fixture
+def gcp_topic():
+    return 'topic'
 
-    def test_handle_empty_message_attributes(self):
-        # Given
-        self.message.attributes = {}
 
-        # when
-        self.responder.handle_message(self.message)
+@pytest.fixture
+def export_job_id() -> str:
+    return str(uuid.uuid4()).replace('-', '')
 
-        # Then
-        self.ingest.job_exists_with_submission.assert_not_called()
-        self.ingest.set_data_file_transfer.assert_not_called()
-        self.message.ack.assert_not_called()
-        self.message.nack.assert_called_once()
 
-    def test_handle_message_without_transfer_job(self):
-        # Given
-        self.message.attributes = {
-            "eventType": "TRANSFER_OPERATION_SUCCESS"
-        }
-        # when
-        self.responder.handle_message(self.message)
+@pytest.fixture
+def mock_ingest():
+    return Mock(spec=IngestService)
 
-        # Then
-        self.ingest.job_exists_with_submission.assert_not_called()
-        self.ingest.set_data_file_transfer.assert_not_called()
-        self.message.ack.assert_not_called()
-        self.message.nack.assert_called_once()
 
-    def test_handle_message_with_malformed_transfer_job(self):
-        # Given
-        export_id = str(uuid.uuid4())
-        self.message.attributes = {
-            "eventType": "TRANSFER_OPERATION_SUCCESS",
-            "transferJobName": "transferBob/" + export_id
-        }
-        # when
-        self.responder.handle_message(self.message)
+@pytest.fixture
+def responder(mock_ingest, gcp_project, gcp_topic):
+    return MockTerraTransferResponder(mock_ingest, gcp_project, gcp_topic)
 
-        # Then
-        self.ingest.job_exists_with_submission.assert_not_called()
-        self.ingest.set_data_file_transfer.assert_not_called()
-        self.message.ack.assert_not_called()
-        self.message.nack.assert_called_once()
 
-    def test_handle_message_for_other_server(self):
-        # Given
-        self.ingest.job_exists_with_submission.return_value = False
+@pytest.fixture
+def message(export_job_id):
+    msg = Mock(spec=Message)
+    msg.attributes = {
+        "eventType": "TRANSFER_OPERATION_SUCCESS",
+        "transferJobName": f'transferJobs/{export_job_id}'
+    }
+    return msg
 
-        export_id = str(uuid.uuid4())
-        self.message.attributes = {
-            "eventType": "TRANSFER_OPERATION_SUCCESS",
-            "transferJobName": "transferJobs/" + export_id
-        }
 
-        # when
-        self.responder.handle_message(self.message)
+@pytest.fixture(params=[
+    {},
+    {"eventType": "TRANSFER_OPERATION_SUCCESS"},
+    {"eventType": "TRANSFER_OPERATION_SUCCESS", "transferJobName": "transferBob"}
+], ids=['empty message', 'missing job id', 'malformed job id'])
+def malformed_message(request):
+    msg = Mock(spec=Message)
+    msg.attributes = request.param
+    return msg
 
-        # Then
-        self.ingest.job_exists_with_submission.assert_called_once_with(export_id)
-        self.ingest.set_data_file_transfer.assert_not_called()
-        self.message.ack.assert_not_called()
-        self.message.nack.assert_called_once()
+
+def test_expected_message(responder, message, mock_ingest, export_job_id):
+    # When
+    responder.handle_message(message)
+
+    # Then
+    mock_ingest.job_exists.assert_called_once_with(export_job_id)
+    mock_ingest.job_exists_with_submission.assert_called_once_with(export_job_id)
+    mock_ingest.set_data_file_transfer.assert_called_once_with(export_job_id, ExportContextState.COMPLETE)
+    message.ack.assert_called_once()
+
+    message.nack.assert_not_called()
+
+
+def test_malformed_message(responder, malformed_message, mock_ingest, export_job_id):
+    # When
+    responder.handle_message(malformed_message)
+
+    # Then
+    malformed_message.nack.assert_called_once()
+
+    mock_ingest.job_exists.assert_not_called()
+    mock_ingest.job_exists_with_submission.assert_not_called()
+    mock_ingest.set_data_file_transfer.assert_not_called()
+    malformed_message.ack.assert_not_called()
+
+
+def test_message_from_other_server(responder, message, mock_ingest, export_job_id):
+    # Given
+    mock_ingest.job_exists.return_value = False
+
+    # When
+    responder.handle_message(message)
+
+    # Then
+    message.nack.assert_called_once()
+
+    mock_ingest.job_exists_with_submission.assert_not_called()
+    mock_ingest.set_data_file_transfer.assert_not_called()
+    message.ack.assert_not_called()
+
+
+def test_message_for_deleted_submission(responder, message, mock_ingest, export_job_id):
+    # Given
+    mock_ingest.job_exists.return_value = True
+    mock_ingest.job_exists_with_submission.return_value = False
+
+    # When
+    responder.handle_message(message)
+
+    # Then
+    message.ack.assert_called_once()
+
+    mock_ingest.set_data_file_transfer.assert_not_called()
+    message.nack.assert_not_called()
