@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from tempfile import NamedTemporaryFile
 from unittest.mock import Mock, ANY
 
 import pytest
