@@ -36,6 +36,9 @@ class TerraExperimentHandler(MessageHandler):
 
     def handle_message(self, body: dict, msg: Message):
         exp = ExperimentMessage.from_dict(body)
+        if not self.ingest_service.job_exists_with_submission(exp.job_id):
+            self.logger.info(f'Received experiment export message for deleted Submission. Acknowledging message')
+            return msg.ack()
         self.logger.info(f'Received experiment export message.')
         self.experiment_exporter.export(exp.process_uuid)
         self.logger.info('Experiment export finished, informing ingest')
