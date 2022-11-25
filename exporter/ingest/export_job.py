@@ -53,20 +53,20 @@ class ExportContextState(Enum):
 class ExportJob:
     job: InitVar[dict]
     job_id: str = field(init=False)
+    submission_id: str = field(init=False)
     created_date: datetime = field(init=False)
+    updated_date: datetime = field(init=False)
     export_state: ExportJobState = field(init=False)
-    num_expected_assays: int = field(init=False, default=0)
-    data_file_transfer: ExportContextState = field(init=False, default=ExportContextState.NOT_STARTED)
-    spreadsheet_generation: ExportContextState = field(init=False, default=ExportContextState.NOT_STARTED)
+    num_expected_assays: int = field(init=False)
+    data_file_transfer: ExportContextState = field(init=False)
+    spreadsheet_generation: ExportContextState = field(init=False)
 
     def __post_init__(self, job: dict):
-        self.job_id = str(job["_links"]["self"]["href"]).split("/")[-1]
-        self.created_date = parse_date_string(job["createdDate"])
-        self.export_state = ExportJobState(job["status"].upper())
-        if 'context' in job:
-            if 'totalAssayCount' in job['context']:
-                self.num_expected_assays = int(job["context"]["totalAssayCount"])
-            if 'dataFileTransfer' in job["context"]:
-                self.data_file_transfer = ExportContextState(job["context"]["dataFileTransfer"].upper())
-            if 'spreadsheetGeneration' in job["context"]:
-                self.spreadsheet_generation = ExportContextState(job["context"]["spreadsheetGeneration"].upper())
+        self.job_id = str(job.get("_links", {}).get("self", {}).get("href", '')).partition("/exportJobs/")[2]
+        self.submission_id = str(job.get("_links", {}).get("submission", {}).get("href", '')).partition("/submissionEnvelopes/")[2]
+        self.created_date = parse_date_string(job["createdDate"]) if 'createdDate' in job else datetime.min
+        self.updated_date = parse_date_string(job["updatedDate"]) if 'updatedDate' in job else datetime.now()
+        self.export_state = ExportJobState(str(job.get("status", "EXPORTING")).upper())
+        self.num_expected_assays = int(job.get("context", {}).get("totalAssayCount", 0))
+        self.data_file_transfer = ExportContextState(str(job.get("context", {}).get("dataFileTransfer", 'NOT_STARTED')).upper())
+        self.spreadsheet_generation = ExportContextState(str(job.get("context", {}).get("spreadsheetGeneration", 'NOT_STARTED')).upper())
