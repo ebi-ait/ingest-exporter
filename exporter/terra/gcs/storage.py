@@ -23,12 +23,31 @@ class GcsStorage:
         self.logger = logging.getLogger(logger_name)
 
     def write(self, bucket_name: str, key: str, data_stream: Streamable, overwrite=False):
-        bucket: Bucket = self.client.bucket(bucket_name)
-        blob: Blob = bucket.blob(key, chunk_size=1024 * 256 * 20)
+        blob = self.__blob(bucket_name, key)
         if overwrite:
             self.__overwrite(blob, data_stream)
         else:
             self.__write(blob, data_stream)
+
+    def delete(self, bucket_name: str, key: str):
+        blob = self.__blob(bucket_name, key)
+        if blob.exists():
+            self.logger.info(f'File exists, Deleting: {blob.name}')
+            blob.delete()
+        else:
+            self.logger.info(f'File does not exist, no need to delete: {blob.name}')
+
+    def delete_all(self, bucket_name: str, prefix: str):
+        for blob in self.__all_blobs(bucket_name, prefix):
+            self.logger.info(f'Deleting: {blob.name}')
+            blob.delete()
+
+    def __blob(self, bucket_name: str, key: str) -> Blob:
+        bucket: Bucket = self.client.bucket(bucket_name)
+        return bucket.blob(key, chunk_size=1024 * 256 * 20)
+
+    def __all_blobs(self, bucket_name: str, prefix: str):
+        return self.client.list_blobs(bucket_name, prefix=prefix, delimiter='/')
 
     def __overwrite(self, blob: Blob, data_stream: Streamable):
         blob.upload_from_file(data_stream)

@@ -82,6 +82,17 @@ class TerraStorageClient:
         data_stream = self.dict_to_json_stream({'is_delta': False})
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
+    def delete_metadata(self, project_uuid: str, metadata_type: str, concrete_type: str, metadata_uuid: str):
+        meta_prefix = f'{self.key_prefix}/{project_uuid}/metadata/{concrete_type}/{metadata_uuid}'
+        self.gcs_storage.delete_all(self.bucket_name, meta_prefix)
+        if metadata_type == "file":
+            descriptor_prefix = f'{self.key_prefix}/{project_uuid}/descriptors/{concrete_type}/{metadata_uuid}'
+            self.gcs_storage.delete_all(self.bucket_name, descriptor_prefix)
+
+    def delete_file(self, file_key: str):
+        key = f'{self.key_prefix}/{file_key}'
+        self.gcs_storage.delete(self.bucket_name, key)
+
     @staticmethod
     def dict_to_json_stream(d: Dict) -> StringIO:
         return StringIO(json.dumps(d))
