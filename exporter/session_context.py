@@ -60,6 +60,7 @@ class SessionContext(object):
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.INFO)
         logger.addHandler(BASIC_HANDLER)
+        logger.propagate = False
         return logger
 
     @staticmethod
