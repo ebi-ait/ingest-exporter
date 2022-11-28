@@ -18,8 +18,7 @@ from exporter.terra.storage import TerraStorageClient
 class SpreadsheetReExporter(SpreadsheetExporter):
     def delete_old_files(self, project_uuid: str):
         old_filename = f'metadata_{project_uuid}.xlsx'
-        old_file_key = f'{project_uuid}/data/{old_filename}'
-        self.terra.delete_file(old_file_key)
+        self.terra.delete_data_file(project_uuid, old_filename)
         metadata_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{old_filename}_metadata'))
         self.terra.delete_metadata(project_uuid, 'file', 'supplementary_file', metadata_uuid)
 
