@@ -1,0 +1,36 @@
+{
+  "createdDate": "2022-12-05T18:27:05.519Z",
+  "destination": {
+    "name": "Dcp",
+    "version": "v2",
+    "context": {
+      "projectUuid": "e88714c2-2e78-49da-8146-5a60b50628b4"
+    }
+  },
+  "status": "Exporting",
+  "updatedDate": "2022-12-06T11:54:44.193Z",
+  "context": {
+    "dataFileTransfer": "COMPLETE",
+    "spreadsheetGeneration": false,
+    "totalAssayCount": 6
+  },
+  "errors": [],
+  "_links": {
+    "self": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/exportJobs/638e37f931a4c47b19a7cc57"
+    },
+    "exportJob": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/exportJobs/638e37f931a4c47b19a7cc57"
+    },
+    "exportEntities": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/exportJobs/638e37f931a4c47b19a7cc57/entities"
+    },
+    "exportEntitiesByStatus": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/exportJobs/638e37f931a4c47b19a7cc57/entities?status={status}",
+      "templated": true
+    },
+    "submission": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/submissionEnvelopes/638a7f9e31a4c47b19a7c18e"
+    }
+  }
+}
