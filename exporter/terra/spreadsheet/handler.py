@@ -28,7 +28,8 @@ class SpreadsheetHandler(MessageHandler):
 
     def handle_message(self, body: dict, msg: Message):
         message = SpreadsheetExporterMessage(body)
-        if not self.ingest.job_exists_with_submission(message.job_id):
+        job = self.ingest.get_job(message.job_id)
+        if not job.submission_id:
             self.logger.info(f'Received spreadsheet export message for deleted Submission. Acknowledging message')
             return msg.ack()
         self.logger.info('Received spreadsheet export message, informing ingest')

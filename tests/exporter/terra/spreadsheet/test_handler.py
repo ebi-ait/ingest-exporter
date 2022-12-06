@@ -5,7 +5,7 @@ from assertpy import assert_that
 
 from kombu import Message
 
-from exporter.ingest.export_job import ExportContextState
+from exporter.ingest.export_job import ExportContextState, ExportJob
 from exporter.ingest.service import IngestService
 from exporter.terra.spreadsheet.exporter import SpreadsheetExporter
 from exporter.terra.spreadsheet.handler import SpreadsheetHandler
@@ -20,20 +20,40 @@ class MockSpreadsheetHandler(SpreadsheetHandler):
 
 
 @pytest.fixture
-def ingest():
+def mock_ingest():
     return Mock(spec=IngestService)
 
 
 @pytest.fixture
-def handler(ingest):
-    ingest.job_exists_with_submission.return_value = True
-    return MockSpreadsheetHandler(ingest)
+def job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    job.submission_id = submission_id
+    mock_ingest.get_job.return_value = job
+    return job
 
 
 @pytest.fixture
-def missing_job_handler(ingest):
-    ingest.job_exists_with_submission.return_value = False
-    return MockSpreadsheetHandler(ingest)
+def job_without_submission(mock_ingest, export_job_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    mock_ingest.get_job.return_value = job
+    return job
+
+
+@pytest.fixture
+def complete_job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    job.submission_id = submission_id
+    job.spreadsheet_generation = ExportContextState.COMPLETE
+    mock_ingest.get_job.return_value = job
+    return job
+
+
+@pytest.fixture
+def handler(mock_ingest):
+    return MockSpreadsheetHandler(mock_ingest)
 
 
 @pytest.fixture
@@ -43,6 +63,11 @@ def message():
 
 @pytest.fixture
 def export_job_id() -> str:
+    return str(uuid.uuid4()).replace('-', '')
+
+
+@pytest.fixture
+def submission_id() -> str:
     return str(uuid.uuid4()).replace('-', '')
 
 
@@ -65,25 +90,35 @@ def body(export_job_id, submission_uuid, project_uuid) -> dict:
     }
 
 
-def test_happy_path(ingest, handler, body, message, export_job_id, project_uuid, submission_uuid):
+def test_happy_path(mock_ingest, handler, body, message, job, project_uuid, submission_uuid):
     # When
     handler.handle_message(body, message)
 
     # Then
     handler.exporter.export_spreadsheet.assert_called_once_with(project_uuid, submission_uuid)
-    assert_that(ingest.set_spreadsheet_generation.call_count).is_equal_to(2)
-    for call in ingest.set_spreadsheet_generation.call_args_list:
-        assert_that(call.args[0]).is_equal_to(export_job_id)
-    assert_that(ingest.set_spreadsheet_generation.call_args_list[0].args[1]).is_equal_to(ExportContextState.STARTED)
-    assert_that(ingest.set_spreadsheet_generation.call_args_list[1].args[1]).is_equal_to(ExportContextState.COMPLETE)
+    assert_that(mock_ingest.set_spreadsheet_generation.call_count).is_equal_to(2)
+    for call in mock_ingest.set_spreadsheet_generation.call_args_list:
+        assert_that(call.args[0]).is_equal_to(job.job_id)
+    assert_that(mock_ingest.set_spreadsheet_generation.call_args_list[0].args[1]).is_equal_to(ExportContextState.STARTED)
+    assert_that(mock_ingest.set_spreadsheet_generation.call_args_list[1].args[1]).is_equal_to(ExportContextState.COMPLETE)
     message.ack.assert_called_once()
 
 
-def test_missing_job_or_submission(ingest, missing_job_handler, body, message):
+def test_missing_job_or_submission(mock_ingest, handler, body, message, job_without_submission):
     # When
-    missing_job_handler.handle_message(body, message)
+    handler.handle_message(body, message)
 
     # Then
     message.ack.assert_called_once()
-    ingest.set_spreadsheet_generation.assert_not_called()
-    missing_job_handler.exporter.export_spreadsheet.assert_not_called()
+    mock_ingest.set_spreadsheet_generation.assert_not_called()
+    handler.exporter.export_spreadsheet.assert_not_called()
+
+
+def test_complete_job(mock_ingest, handler, body, message, complete_job):
+    # When
+    handler.handle_message(body, message)
+
+    # Then
+    message.ack.assert_called_once()
+    mock_ingest.set_spreadsheet_generation.assert_not_called()
+    handler.exporter.export_spreadsheet.assert_not_called()
