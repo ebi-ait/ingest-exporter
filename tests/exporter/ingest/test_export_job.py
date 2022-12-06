@@ -1,3 +1,4 @@
+import json
 import random
 import uuid
 from datetime import datetime
@@ -127,6 +128,22 @@ def test_empty_job():
     assert_that(job.data_file_transfer).is_equal_to(ExportContextState.NOT_STARTED)
     assert_that(job.spreadsheet_generation).is_equal_to(ExportContextState.NOT_STARTED)
     assert_that(job.num_expected_assays).is_equal_to(0)
+
+
+def test_broken_context_job(broken_context_job_dict):
+    job = ExportJob(broken_context_job_dict)
+    assert_that(job.job_id).is_equal_to('638e37f931a4c47b19a7cc57')
+    assert_that(job.submission_id).is_equal_to('638a7f9e31a4c47b19a7c18e')
+    assert_that(job.export_state).is_equal_to(ExportJobState.EXPORTING)
+    assert_that(job.data_file_transfer).is_equal_to(ExportContextState.COMPLETE)
+    assert_that(job.spreadsheet_generation).is_equal_to(ExportContextState.NOT_STARTED)
+    assert_that(job.num_expected_assays).is_equal_to(6)
+
+
+@pytest.fixture
+def broken_context_job_dict():
+    with open('tests/exporter/ingest/broken_export_job.json', 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 
 @pytest.fixture
