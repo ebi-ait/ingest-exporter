@@ -43,6 +43,12 @@ class ExportJobState(Enum):
     DEPRECATED = "DEPRECATED"
     FAILED = "FAILED"
 
+    @staticmethod
+    def parse(obj, default="EXPORTING") -> ExportJobState:
+        if obj and isinstance(obj, str):
+            return ExportJobState(obj.upper())
+        return ExportJobState(default.upper())
+
 
 class ExportContextState(Enum):
     NOT_STARTED = "NOT_STARTED"
@@ -73,7 +79,7 @@ class ExportJob:
         self.submission_id = str(job.get("_links", {}).get("submission", {}).get("href", '')).partition("/submissionEnvelopes/")[2]
         self.created_date = parse_date_string(job["createdDate"]) if 'createdDate' in job else datetime.min
         self.updated_date = parse_date_string(job["updatedDate"]) if 'updatedDate' in job else datetime.now()
-        self.export_state = ExportJobState(str(job.get("status", "EXPORTING")).upper())
+        self.export_state = ExportJobState.parse(job.get("status"))
         self.num_expected_assays = int(job.get("context", {}).get("totalAssayCount", 0))
         self.data_file_transfer = ExportContextState.parse(job.get("context", {}).get("dataFileTransfer"))
         self.spreadsheet_generation = ExportContextState.parse(job.get("context", {}).get("spreadsheetGeneration"))
