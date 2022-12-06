@@ -35,11 +35,14 @@ class IngestService:
         self.api.patch(job_url, json={"status": ExportJobState.EXPORTED.value})
 
     def get_job(self, job_id: str) -> ExportJob:
-        job_dict = self.__get_job_if_exists(job_id)
+        job_dict = self.__get_job(job_id)
         return ExportJob(job_dict)
 
-    def job_exists(self, job_id) -> bool:
-        return True if self.__get_job_if_exists(job_id) else False
+    def get_job_if_exists(self, job_id: str):
+        job_url = self.get_job_url(job_id)
+        response = self.api.session.get(job_url, headers=self.api.get_headers())
+        if response.ok:
+            return ExportJob(response.json())
 
     def job_exists_with_submission(self, job_id) -> bool:
         job_dict = self.__get_job_if_exists(job_id)
@@ -87,6 +90,10 @@ class IngestService:
         job_url = self.get_job_url(job_id)
         job_json = self.api.patch(f'{job_url}/context', json={context: state.value}).json()
         return ExportJob(job_json)
+
+    def __get_job(self, job_id: str):
+        job_url = self.get_job_url(job_id)
+        return self.api.get(job_url).json()
 
     def __get_job_if_exists(self, job_id: str):
         job_url = self.get_job_url(job_id)

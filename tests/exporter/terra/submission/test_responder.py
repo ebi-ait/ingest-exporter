@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from google.cloud.pubsub_v1 import SubscriberClient
 from google.cloud.pubsub_v1.subscriber.message import Message
 
-from exporter.ingest.export_job import ExportContextState
+from exporter.ingest.export_job import ExportContextState, ExportJob
 from exporter.ingest.service import IngestService
 from exporter.session_context import SessionContext
 from exporter.terra.submission.responder import TerraTransferResponder
@@ -35,6 +35,43 @@ def gcp_topic():
 def export_job_id() -> str:
     return str(uuid.uuid4()).replace('-', '')
 
+
+@pytest.fixture
+def submission_id() -> str:
+    return str(uuid.uuid4()).replace('-', '')
+
+
+@pytest.fixture
+def job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    job.submission_id = submission_id
+    job.data_file_transfer = ExportContextState.STARTED
+    mock_ingest.get_job_if_exists.return_value = job
+    return job
+
+
+@pytest.fixture
+def job_does_not_exist(mock_ingest):
+    mock_ingest.get_job_if_exists.return_value = None
+
+
+@pytest.fixture
+def job_without_submission(mock_ingest, export_job_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    mock_ingest.get_job_if_exists.return_value = job
+    return job
+
+
+@pytest.fixture
+def complete_job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    job.submission_id = submission_id
+    job.data_file_transfer = ExportContextState.COMPLETE
+    mock_ingest.get_job_if_exists.return_value = job
+    return job
 
 @pytest.fixture
 def mock_ingest():
@@ -67,52 +104,53 @@ def malformed_message(request):
     return msg
 
 
-def test_expected_message(responder, message, mock_ingest, export_job_id):
+def test_expected_message(responder, message, mock_ingest, job: ExportJob):
     # When
     responder.handle_message(message)
 
     # Then
-    mock_ingest.job_exists.assert_called_once_with(export_job_id)
-    mock_ingest.job_exists_with_submission.assert_called_once_with(export_job_id)
-    mock_ingest.set_data_file_transfer.assert_called_once_with(export_job_id, ExportContextState.COMPLETE)
+    mock_ingest.get_job_if_exists.assert_called_once_with(job.job_id)
+    mock_ingest.set_data_file_transfer.assert_called_once_with(job.job_id, ExportContextState.COMPLETE)
     message.ack.assert_called_once()
 
     message.nack.assert_not_called()
 
 
-def test_malformed_message(responder, malformed_message, mock_ingest, export_job_id):
+def test_malformed_message(responder, malformed_message, mock_ingest, job: ExportJob):
     # When
     responder.handle_message(malformed_message)
 
     # Then
     malformed_message.nack.assert_called_once()
 
-    mock_ingest.job_exists.assert_not_called()
-    mock_ingest.job_exists_with_submission.assert_not_called()
+    mock_ingest.get_job_if_exists.assert_not_called()
     mock_ingest.set_data_file_transfer.assert_not_called()
     malformed_message.ack.assert_not_called()
 
 
-def test_message_from_other_server(responder, message, mock_ingest, export_job_id):
-    # Given
-    mock_ingest.job_exists.return_value = False
-
+def test_message_from_other_server(responder, message, mock_ingest, job_does_not_exist: ExportJob):
     # When
     responder.handle_message(message)
 
     # Then
     message.nack.assert_called_once()
 
-    mock_ingest.job_exists_with_submission.assert_not_called()
     mock_ingest.set_data_file_transfer.assert_not_called()
     message.ack.assert_not_called()
 
 
-def test_message_for_deleted_submission(responder, message, mock_ingest, export_job_id):
-    # Given
-    mock_ingest.job_exists.return_value = True
-    mock_ingest.job_exists_with_submission.return_value = False
+def test_message_for_deleted_submission(responder, message, mock_ingest, job_without_submission: ExportJob):
+    # When
+    responder.handle_message(message)
 
+    # Then
+    message.ack.assert_called_once()
+
+    mock_ingest.set_data_file_transfer.assert_not_called()
+    message.nack.assert_not_called()
+
+
+def test_message_for_completed_job(responder, message, mock_ingest, complete_job: ExportJob):
     # When
     responder.handle_message(message)
 

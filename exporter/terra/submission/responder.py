@@ -5,7 +5,7 @@ from google.cloud.pubsub_v1 import SubscriberClient
 from google.cloud.pubsub_v1.subscriber.message import Message
 from google.oauth2.service_account import Credentials
 
-from exporter.ingest.export_job import ExportContextState
+from exporter.ingest.export_job import ExportContextState, ExportJob
 from exporter.ingest.service import IngestService
 from exporter.session_context import SessionContext
 from exporter.terra.gcs.config import GcpConfig
@@ -51,16 +51,20 @@ class TerraTransferResponder:
             return message.nack()
         export_job_id = transfer_name.replace('transferJobs/', '')
         with SessionContext(logger=self.logger, context={'export_job_id': export_job_id}):
-            if not self.ingest.job_exists(export_job_id):
+            job = self.ingest.get_job_if_exists(export_job_id)
+            if not job:
                 self.logger.warning(f'Export Job does not exist on this environment, this could be because the terra staging environment is used for both dev and staging ingest')
                 return message.nack()
-            if not self.ingest.job_exists_with_submission(export_job_id):
+            if not job.submission_id:
                 self.logger.info(f'Export Job linked Submission deleted. Acknowledging message')
                 return message.ack()
-            self.handle_data_transfer_complete(message, export_job_id)
+            if job.data_file_transfer == ExportContextState.COMPLETE:
+                self.logger.info(f'Export Job data file transfer already complete. Acknowledging message')
+                return message.ack()
+            self.handle_data_transfer_complete(message, job)
 
-    def handle_data_transfer_complete(self, message: Message, export_job_id: str):
+    def handle_data_transfer_complete(self, message: Message, export_job: ExportJob):
         self.logger.info(f'Received message that data transfer is complete, informing ingest')
-        self.ingest.set_data_file_transfer(export_job_id, ExportContextState.COMPLETE)
+        self.ingest.set_data_file_transfer(export_job.job_id, ExportContextState.COMPLETE)
         self.logger.info(f'Acknowledging data transfer complete message')
         message.ack()

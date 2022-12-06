@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from assertpy import assert_that
 from kombu import Message
 
-from exporter.ingest.export_job import ExportContextState
+from exporter.ingest.export_job import ExportContextState, ExportJob
 from exporter.ingest.service import IngestService
 from exporter.session_context import get_session_value
 from exporter.terra.submission.exporter import TerraSubmissionExporter
@@ -21,20 +21,41 @@ class MockSubmissionHandler(TerraSubmissionHandler):
 
 
 @pytest.fixture
-def ingest():
+def mock_ingest():
     return Mock(spec=IngestService)
 
 
 @pytest.fixture
-def handler(ingest):
-    ingest.job_exists_with_submission.return_value = True
-    return MockSubmissionHandler(ingest)
+def handler(mock_ingest):
+    return MockSubmissionHandler(mock_ingest)
 
 
 @pytest.fixture
-def missing_job_handler(ingest):
-    ingest.job_exists_with_submission.return_value = False
-    return MockSubmissionHandler(ingest)
+def job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    job.submission_id = submission_id
+    job.data_file_transfer = ExportContextState.NOT_STARTED
+    mock_ingest.get_job.return_value = job
+    return job
+
+
+@pytest.fixture
+def job_without_submission(mock_ingest, export_job_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    mock_ingest.get_job.return_value = job
+    return job
+
+
+@pytest.fixture
+def started_job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+    job = ExportJob({})
+    job.job_id = export_job_id
+    job.submission_id = submission_id
+    job.data_file_transfer = ExportContextState.STARTED
+    mock_ingest.get_job.return_value = job
+    return job
 
 
 @pytest.fixture
@@ -46,6 +67,10 @@ def message():
 def export_job_id() -> str:
     return str(uuid.uuid4()).replace('-', '')
 
+
+@pytest.fixture
+def submission_id() -> str:
+    return str(uuid.uuid4()).replace('-', '')
 
 @pytest.fixture
 def submission_uuid() -> str:
@@ -66,24 +91,33 @@ def body(export_job_id, submission_uuid, project_uuid) -> dict:
     }
 
 
-def test_happy_path(ingest, handler, body, message, export_job_id, project_uuid, submission_uuid):
+def test_happy_path(mock_ingest, handler, body, message, job, project_uuid, submission_uuid):
     # When
     handler.handle_message(body, message)
 
     # Then
-    handler.submission_exporter.start_data_file_transfer.assert_called_once_with(export_job_id, submission_uuid, project_uuid)
-    ingest.set_data_file_transfer.assert_called_once_with(export_job_id, ExportContextState.STARTED)
+    handler.submission_exporter.start_data_file_transfer.assert_called_once_with(job.job_id, submission_uuid, project_uuid)
+    mock_ingest.set_data_file_transfer.assert_called_once_with(job.job_id, ExportContextState.STARTED)
     message.ack.assert_called_once()
 
 
-def test_missing_job_or_submission(ingest, missing_job_handler, body, message):
+def test_missing_job_or_submission(mock_ingest, handler, body, message, job_without_submission):
     # When
-    missing_job_handler.handle_message(body, message)
+    handler.handle_message(body, message)
 
     # Then
     message.ack.assert_called_once()
-    missing_job_handler.submission_exporter.start_data_file_transfer.assert_not_called()
-    ingest.set_data_file_transfer.assert_not_called()
+    handler.submission_exporter.start_data_file_transfer.assert_not_called()
+    mock_ingest.set_data_file_transfer.assert_not_called()
+
+def test_started_job(mock_ingest, handler, body, message, started_job):
+    # When
+    handler.handle_message(body, message)
+
+    # Then
+    message.ack.assert_called_once()
+    handler.submission_exporter.start_data_file_transfer.assert_not_called()
+    mock_ingest.set_data_file_transfer.assert_not_called()
 
 
 def test_context(export_job_id, project_uuid, submission_uuid, handler, body):

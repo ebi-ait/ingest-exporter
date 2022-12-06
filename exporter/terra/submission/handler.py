@@ -28,8 +28,12 @@ class TerraSubmissionHandler(MessageHandler):
     def handle_message(self, body: dict, msg: Message):
         export = SubmissionExportMessage(body)
         self.logger.info('Received data transfer message')
-        if not self.ingest_service.job_exists_with_submission(export.job_id):
+        job = self.ingest_service.get_job(export.job_id)
+        if not job.submission_id:
             self.logger.info(f'Submission has been deleted. Acknowledging message')
+            return msg.ack()
+        if job.data_file_transfer != ExportContextState.NOT_STARTED:
+            self.logger.info(f'Data transfer has already started / finished. Acknowledging message')
             return msg.ack()
         self.submission_exporter.start_data_file_transfer(export.job_id, export.submission_uuid, export.project_uuid)
         self.logger.info('Started data transfer, informing ingest')
