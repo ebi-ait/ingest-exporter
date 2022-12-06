@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass, InitVar, field
 from datetime import datetime
 from enum import Enum
@@ -48,6 +49,12 @@ class ExportContextState(Enum):
     STARTED = "STARTED"
     COMPLETE = "COMPLETE"
 
+    @staticmethod
+    def parse(obj, default="NOT_STARTED") -> ExportContextState:
+        if obj and isinstance(obj, str):
+            return ExportContextState(obj.upper())
+        return ExportContextState(default.upper())
+
 
 @dataclass
 class ExportJob:
@@ -68,5 +75,5 @@ class ExportJob:
         self.updated_date = parse_date_string(job["updatedDate"]) if 'updatedDate' in job else datetime.now()
         self.export_state = ExportJobState(str(job.get("status", "EXPORTING")).upper())
         self.num_expected_assays = int(job.get("context", {}).get("totalAssayCount", 0))
-        self.data_file_transfer = ExportContextState(str(job.get("context", {}).get("dataFileTransfer", 'NOT_STARTED')).upper())
-        self.spreadsheet_generation = ExportContextState(str(job.get("context", {}).get("spreadsheetGeneration", 'NOT_STARTED')).upper())
+        self.data_file_transfer = ExportContextState.parse(job.get("context", {}).get("dataFileTransfer"))
+        self.spreadsheet_generation = ExportContextState.parse(job.get("context", {}).get("spreadsheetGeneration"))
