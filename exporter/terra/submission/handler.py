@@ -32,6 +32,9 @@ class TerraSubmissionHandler(MessageHandler):
         if not job.submission_id:
             self.logger.info(f'Submission has been deleted. Acknowledging message')
             return msg.ack()
+        if job.data_file_transfer != ExportContextState.NOT_STARTED:
+            self.logger.info(f'Data transfer has already started / finished. Acknowledging message')
+            return msg.ack()
         self.submission_exporter.start_data_file_transfer(export.job_id, export.submission_uuid, export.project_uuid)
         self.logger.info('Started data transfer, informing ingest')
         self.ingest_service.set_data_file_transfer(export.job_id, ExportContextState.STARTED)
