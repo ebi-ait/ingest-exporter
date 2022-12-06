@@ -32,6 +32,9 @@ class SpreadsheetHandler(MessageHandler):
         if not job.submission_id:
             self.logger.info(f'Received spreadsheet export message for deleted Submission. Acknowledging message')
             return msg.ack()
+        if job.spreadsheet_generation == ExportContextState.COMPLETE:
+            self.logger.info(f'Export Job spreadsheet generation already complete. Acknowledging message')
+            return msg.ack()
         self.logger.info('Received spreadsheet export message, informing ingest')
         self.ingest.set_spreadsheet_generation(message.job_id, ExportContextState.STARTED)
         self.exporter.export_spreadsheet(message.project_uuid, message.submission_uuid)
