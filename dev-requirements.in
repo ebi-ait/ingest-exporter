@@ -1,6 +1,6 @@
 -c requirements.txt
 assertpy
 mock
-testfixtures==6.18.5
 pytest
 pytest-mock
+testfixtures
