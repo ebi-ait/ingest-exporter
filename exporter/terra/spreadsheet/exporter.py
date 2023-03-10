@@ -66,6 +66,7 @@ class SpreadsheetExporter:
         s256 = hashlib.sha256(spreadsheet_bytes)
         s1 = hashlib.sha1(spreadsheet_bytes)
         crc = f'{crc32c.crc32c(spreadsheet_bytes):08x}'
+        self.logger.info(f'crc: {crc}')
         metadata_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{submission_uuid}_metadata'))
         datafile_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f'{submission_uuid}_data'))
         return Metadata.from_dict({
