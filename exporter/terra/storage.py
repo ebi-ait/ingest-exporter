@@ -35,7 +35,7 @@ class TerraStorageClient:
 
         metadata_json = metadata.get_content(with_provenance=True)
         data_stream = self.dict_to_json_stream(metadata_json)
-        self.write_to_staging_bucket(dest_object_key, data_stream)
+        self.write_to_staging_bucket(dest_object_key, data_stream, overwrite=True)
 
         # TODO2: patch dcpVersion        
         # patch_url = metadata.metadata_json['_links']['self']['href']
@@ -55,7 +55,7 @@ class TerraStorageClient:
         file_descriptor_json = self.generate_file_descriptor_json(file_metadata)
         self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}')
         data_stream = self.dict_to_json_stream(file_descriptor_json)
-        self.write_to_staging_bucket(dest_object_key, data_stream)
+        self.write_to_staging_bucket(dest_object_key, data_stream, overwrite=True)
 
     def generate_file_descriptor_json(self, file_metadata) -> Dict:
         file_descriptor = FileDescriptor.from_file_metadata(file_metadata)
