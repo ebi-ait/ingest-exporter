@@ -31,8 +31,16 @@ class GcsStorage:
             self.__write(blob, data_stream)
 
     def __overwrite(self, blob: Blob, data_stream: Streamable):
-        blob.upload_from_file(data_stream)
-        self.__mark_complete(blob)
+        try:
+            blob.upload_from_file(data_stream, if_generation_match=0)
+            self.__mark_complete(blob)
+        except PreconditionFailed as e:
+            # With if_generation_match=0, this pre-condition failure indicates that another
+            # export instance has began uploading this file. We should not attempt to upload
+            # and instead poll for its completion.
+            # We are safe to assume not 2 exporter instances/threads are going to try to upload
+            # Different versions at the same time, so only 1 overwrite seems safe.
+            self.__assert_file_uploaded(blob)
 
     def __write(self, blob: Blob, data_stream: Streamable):
         try:
