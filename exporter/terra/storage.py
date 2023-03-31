@@ -29,20 +29,20 @@ class TerraStorageClient:
         for metadata in metadatas:
             self.write_metadata(metadata, project_uuid)
 
-    def write_metadata(self, metadata: MetadataResource, project_uuid: str):
+    def write_metadata(self, metadata: MetadataResource, project_uuid: str, overwrite=False):
         # TODO1: only proceed if lastContentModified > last
         dest_object_key = f'{project_uuid}/metadata/{metadata.concrete_type()}/{metadata.uuid}_{metadata.dcp_version}.json'
 
         metadata_json = metadata.get_content(with_provenance=True)
         data_stream = self.dict_to_json_stream(metadata_json)
-        self.write_to_staging_bucket(dest_object_key, data_stream, overwrite=True)
+        self.write_to_staging_bucket(dest_object_key, data_stream, overwrite=overwrite)
 
         # TODO2: patch dcpVersion        
         # patch_url = metadata.metadata_json['_links']['self']['href']
         # self.ingest_client.patch(patch_url, {"dcpVersion": metadata.dcp_version})
 
         if metadata.metadata_type == "file":
-            self.write_file_descriptor(metadata, project_uuid)
+            self.write_file_descriptor(metadata, project_uuid, overwrite=overwrite)
 
     def write_links(self, link_set: LinkSet, process_uuid: str, process_version: str, project_uuid: str):
         dest_object_key = f'{project_uuid}/links/{process_uuid}_{process_version}_{project_uuid}.json'
@@ -50,12 +50,12 @@ class TerraStorageClient:
         data_stream = self.dict_to_json_stream(links_json)
         self.write_to_staging_bucket(dest_object_key, data_stream)
 
-    def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str):
+    def write_file_descriptor(self, file_metadata: MetadataResource, project_uuid: str, overwrite=False):
         dest_object_key = f'{project_uuid}/descriptors/{file_metadata.concrete_type()}/{file_metadata.uuid}_{file_metadata.dcp_version}.json'
         file_descriptor_json = self.generate_file_descriptor_json(file_metadata)
         self.logger.info(f'Writing file descriptor with dataFileUuid: {file_descriptor_json.get("file_id")}')
         data_stream = self.dict_to_json_stream(file_descriptor_json)
-        self.write_to_staging_bucket(dest_object_key, data_stream, overwrite=True)
+        self.write_to_staging_bucket(dest_object_key, data_stream, overwrite=overwrite)
 
     def generate_file_descriptor_json(self, file_metadata) -> Dict:
         file_descriptor = FileDescriptor.from_file_metadata(file_metadata)

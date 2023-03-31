@@ -209,7 +209,7 @@ def check_generated_links(terra_client, project_metadata: MetadataResource, file
 
 def check_file_metadata(project_metadata: MetadataResource, file_metadata=None, terra_client=None) -> MetadataResource:
     if terra_client and not file_metadata:
-        terra_client.write_metadata.assert_called_with(ANY, project_metadata.uuid)
+        terra_client.write_metadata.assert_called_with(ANY, project_metadata.uuid, overwrite=True)
         if file_metadata:
             raise ValueError('Bad input. Use only one of terra_client or file_metadata arguments')
         file_metadata = terra_client.write_metadata.call_args.args[0]
