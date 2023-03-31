@@ -36,7 +36,7 @@ class SpreadsheetExporter:
             self.write_to_terra(spreadsheet_file, project_meta, file_meta)
 
     def write_to_terra(self, spreadsheet_file: TempFile, project_meta: Metadata, file_meta: Metadata):
-        self.terra.write_metadata(file_meta, project_meta.uuid)
+        self.terra.write_metadata(file_meta, project_meta.uuid, overwrite=True)
         self.write_links(file_meta, project_meta)
         spreadsheet_file.seek(0)
         self.terra.write_to_staging_bucket(
