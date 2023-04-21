@@ -47,11 +47,11 @@ def setup_terra_experiment_exporter() -> Thread:
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
 
-    ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
+    ingest_client = new_ingest_client()
 
-    ingest_client = IngestApi(ingest_api_url)
+    metadata_service_page_size = int(os.environ.get('METADATA_SERVICE_PAGE_SIZE', '20'))
+    metadata_service = MetadataService(new_ingest_client(page_size=metadata_service_page_size))
 
-    metadata_service = MetadataService(ingest_client)
     schema_service = SchemaService(ingest_client)
     graph_crawler = GraphCrawler(metadata_service)
 
@@ -70,3 +70,11 @@ def setup_terra_experiment_exporter() -> Thread:
     terra_exporter_listener_process.start()
 
     return terra_exporter_listener_process
+
+
+def new_ingest_client(page_size=None):
+    ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
+    ingest_client = IngestApi(ingest_api_url)
+    if page_size:
+        ingest_client.page_size = page_size
+    return ingest_client
