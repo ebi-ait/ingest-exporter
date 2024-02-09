@@ -2,6 +2,8 @@ import os
 from threading import Thread
 
 from hca_ingest.api.ingestapi import IngestApi
+from hca_ingest.utils.s2s_token_client import ServiceCredential, S2STokenClient
+from hca_ingest.utils.token_manager import TokenManager
 
 from exporter.graph.crawler import GraphCrawler
 from exporter.ingest.service import IngestService
@@ -16,6 +18,7 @@ from exporter.terra.experiment.exporter import TerraExperimentExporter
 from exporter.terra.experiment.handler import TerraExperimentHandler
 from exporter.terra.gcs.config import GcpConfig
 from exporter.terra.gcs.storage import GcsStorage
+from ...utils import init_token_manager
 
 LOGGER_NAME = "TerraExperimentExporter"
 RETRY_POLICY = {
@@ -73,8 +76,10 @@ def setup_terra_experiment_exporter() -> Thread:
 
 
 def new_ingest_client(page_size=None):
+    token_manager:TokenManager = init_token_manager()
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
-    ingest_client = IngestApi(ingest_api_url)
+    ingest_client = IngestApi(url=ingest_api_url, token_manager=token_manager)
     if page_size:
         ingest_client.page_size = page_size
     return ingest_client
+

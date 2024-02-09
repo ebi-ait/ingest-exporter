@@ -3,6 +3,7 @@ from threading import Thread
 from typing import Tuple
 
 from hca_ingest.api.ingestapi import IngestApi
+from hca_ingest.utils.token_manager import TokenManager
 
 from exporter.ingest.service import IngestService
 from exporter.queue.config import QueueConfig, AmqpConnConfig
@@ -14,7 +15,7 @@ from exporter.terra.transfer import TerraTransferClient
 from .exporter import TerraSubmissionExporter
 from .handler import TerraSubmissionHandler
 from .responder import TerraTransferResponder
-
+from ...utils import init_token_manager
 
 LOGGER_NAME = 'TerraSubmissionExporter'
 EXCHANGE = 'ingest.exporter.exchange'
@@ -34,7 +35,9 @@ def setup_terra_submissions_exporter() -> Tuple[Thread, Thread]:
     rabbit_port = int(os.environ.get('RABBIT_PORT', '5672'))
     amqp_conn_config = AmqpConnConfig(rabbit_host, rabbit_port)
 
+    token_manager:TokenManager = init_token_manager()
     ingest_api_url = os.environ.get('INGEST_API', 'localhost:8080')
+    ingest_client = IngestApi(url=ingest_api_url, token_manager=token_manager)
 
     ingest_client = IngestApi(ingest_api_url)
     ingest_service = IngestService(ingest_client)
