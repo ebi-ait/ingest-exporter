@@ -41,4 +41,6 @@ class SpreadsheetHandler(MessageHandler):
         self.logger.info('Spreadsheet export finished, informing ingest')
         self.ingest.set_spreadsheet_generation(message.job_id, ExportContextState.COMPLETE)
         self.logger.info('Acknowledging spreadsheet export message')
+        self.logger.info('Checking if job is complete for spreadsheet-only project export')
+        self.ingest._maybe_complete_job(message.job_id)
         msg.ack()
