@@ -38,7 +38,7 @@ class TerraTransferResponder:
                     self.logger.info(f'Running Google Data Transfer Listener')
                     future.result()
                 except Exception as e:
-                    self.logger.error(f'Google Data Transfer Listener stopped due to: {str(e) if str(e) else e.__class__.__name__}')
+                    self.logger.error(f'Google Data Transfer Listener stopped due to: {str(e) if str(e) else e.__class__.__name__}', exc_info=True)
                     future.cancel()
 
     def handle_message(self, message: Message):
@@ -64,7 +64,10 @@ class TerraTransferResponder:
             self.handle_data_transfer_complete(message, job)
 
     def handle_data_transfer_complete(self, message: Message, export_job: ExportJob):
-        self.logger.info(f'Received message that data transfer is complete, informing ingest')
-        self.ingest.set_data_file_transfer(export_job.job_id, ExportContextState.COMPLETE)
-        self.logger.info(f'Acknowledging data transfer complete message')
-        message.ack()
+        submission_url = self.job_exists_with_submission(export_job.job_id)
+        submission_uuid = self.api.get_object_uuid(submission_url)
+        with SessionContext(logger=self.logger, context={'export_job_id': export_job.job_id, 'submission_uuid':submission_uuid}):
+            self.logger.info(f'Received message that data transfer is complete, informing ingest')
+            self.ingest.set_data_file_transfer(export_job.job_id, ExportContextState.COMPLETE)
+            self.logger.info(f'Acknowledging data transfer complete message')
+            message.ack()
