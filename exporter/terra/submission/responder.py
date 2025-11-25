@@ -28,7 +28,8 @@ class TerraTransferResponder:
             except AlreadyExists:
                 self.logger.info(f'Subscription Found: {self.subscription_path}')
             except Exception as e:
-                self.logger.info(f'Cannot check whether subscription exists: {self.subscription_path} due to {str(e) if str(e) else e.__class__.__name__}')
+                self.logger.error(f'Cannot check whether subscription exists: {self.subscription_path} due to {str(e) if str(e) else e.__class__.__name__}', exc_info=True)
+                raise e
 
     def listen(self):
         while True:
