@@ -37,17 +37,22 @@ def export_job_id() -> str:
 
 
 @pytest.fixture
-def submission_id() -> str:
-    return str(uuid.uuid4()).replace('-', '')
+def submission_id(submission_uuid) -> str:
+    return submission_uuid.replace('-', '')
+
+@pytest.fixture
+def submission_uuid() -> str:
+    return str(uuid.uuid4())
 
 
 @pytest.fixture
-def job(mock_ingest, export_job_id, submission_id) -> ExportJob:
+def job(mock_ingest, export_job_id, submission_id, submission_uuid) -> ExportJob:
     job = ExportJob({})
     job.job_id = export_job_id
     job.submission_id = submission_id
     job.data_file_transfer = ExportContextState.STARTED
     mock_ingest.get_job_if_exists.return_value = job
+    mock_ingest.get_submission_uuid_from_job.return_value = submission_uuid
     return job
 
 
@@ -71,6 +76,7 @@ def complete_job(mock_ingest, export_job_id, submission_id) -> ExportJob:
     job.submission_id = submission_id
     job.data_file_transfer = ExportContextState.COMPLETE
     mock_ingest.get_job_if_exists.return_value = job
+    
     return job
 
 @pytest.fixture
@@ -79,7 +85,7 @@ def mock_ingest():
 
 
 @pytest.fixture
-def responder(mock_ingest, gcp_project, gcp_topic):
+def responder(mock_ingest, gcp_project, gcp_topic) -> MockTerraTransferResponder:
     return MockTerraTransferResponder(mock_ingest, gcp_project, gcp_topic)
 
 

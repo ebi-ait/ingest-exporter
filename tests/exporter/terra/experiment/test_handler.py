@@ -89,11 +89,17 @@ def test_happy_path(handler, body, message, ingest, exporter, queue, process_uui
     # When
     handler.handle_message(body, message)
     # Then
-    exporter.export.assert_called_once_with(process_uuid)
+    exporter.export.assert_called_once_with(process_uuid, body.get('envelopeUuid'))
     ingest.create_export_entity.assert_called_once_with(export_job_id, process_id)
     queue.send_message.assert_called_once_with(handler.producer, body)
     message.ack.assert_called_once()
 
+def test_exception_during_export(handler, body, message, ingest, exporter, queue, process_uuid, export_job_id, process_id):
+    # When
+    handler.handle_message(body, message)
+    # Then
+    exporter.export.assert_called_once_with(process_uuid, body.get('envelopeUuid'))
+    ingest.create_export_entity.assert_called_once_with(export_job_id, process_id)
 
 def test_missing_job_or_submission(missing_job_handler, body, message, ingest, exporter, queue):
     # When

@@ -20,15 +20,17 @@ class IngestService:
         self._maybe_complete_job(job_id)
 
     def _maybe_complete_job(self, job_id):
-        export_job = self.get_job(job_id)
-        self.logger.info(f'export_job.num_expected_assays: {export_job.num_expected_assays}')
-        complete_entities_for_job = self.get_num_complete_entities_for_job(job_id)
-        self.logger.info(f'complete_entities_for_job: {complete_entities_for_job}')
-        if export_job.num_expected_assays == complete_entities_for_job:
-            self.complete_job(job_id)
-            self.logger.info('job complete')
-        else:
-            self.logger.info('job not yet complete')
+        export_job:ExportJob = self.get_job(job_id)
+        submission_uuid = self.get_submission_uuid_from_job(job_id)
+        with SessionContext(logger=self.logger, context={'submission_uuid': submission_uuid}):
+            self.logger.info(f'export_job.num_expected_assays: {export_job.num_expected_assays}')
+            complete_entities_for_job = self.get_num_complete_entities_for_job(job_id)
+            self.logger.info(f'complete_entities_for_job: {complete_entities_for_job}')
+            if export_job.num_expected_assays == complete_entities_for_job:
+                self.complete_job(job_id)
+                self.logger.info('job complete')
+            else:
+                self.logger.info('job not yet complete')
 
     def complete_job(self, job_id: str):
         job_url = self.get_job_url(job_id)
@@ -48,6 +50,10 @@ class IngestService:
         job_dict = self.__get_job_if_exists(job_id)
         submission_link = self.api.get_link_from_resource(job_dict, "submission")
         return submission_link and not submission_link.endswith('/submissionEnvelopes')
+
+    def get_submission_uuid_from_job(self, job_id: str) -> str:
+        submission_url = self.job_exists_with_submission(job_id)
+        return self.api.get_object_uuid(submission_url)
 
     def get_job_url(self, job_id: str) -> str:
         return self.api.get_full_url(f'/exportJobs/{job_id}')

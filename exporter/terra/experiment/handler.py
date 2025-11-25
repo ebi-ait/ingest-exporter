@@ -18,9 +18,9 @@ class TerraExperimentHandler(MessageHandler):
             logger_name: str = __name__
     ):
         super().__init__(logger_name)
-        self.experiment_exporter = experiment_exporter
-        self.ingest_service = ingest_service
-        self.publish_queue = publish_queue_config
+        self.experiment_exporter: TerraExperimentExporter = experiment_exporter
+        self.ingest_service: IngestService = ingest_service
+        self.publish_queue: QueueConfig = publish_queue_config
 
     def set_context(self, body: dict) -> SessionContext:
         return SessionContext(
@@ -40,7 +40,7 @@ class TerraExperimentHandler(MessageHandler):
             self.logger.info(f'Received experiment export message for deleted Submission. Acknowledging message')
             return msg.ack()
         self.logger.info(f'Received experiment export message.')
-        self.experiment_exporter.export(exp.process_uuid)
+        self.experiment_exporter.export(exp.process_uuid, exp.submission_uuid)
         self.logger.info('Experiment export finished, informing ingest')
         self.ingest_service.create_export_entity(exp.job_id, exp.process_id)
         self.publish_queue.send_message(self.producer, body)

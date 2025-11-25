@@ -2,6 +2,7 @@ import logging
 
 from exporter.graph.crawler import GraphCrawler
 from exporter.ingest.service import IngestService
+from exporter.terra.experiment.message import ExperimentMessage
 from exporter.terra.storage import TerraStorageClient
 
 
@@ -18,7 +19,7 @@ class TerraExperimentExporter:
         self.ingest_service = ingest_service
         self.logger = logging.getLogger(logger_name)
 
-    def export(self, process_uuid):
+    def export(self, process_uuid:str, submission_uuid:str):
         process = self.ingest_service.get_metadata('processes', process_uuid)
         project = self.ingest_service.project_for_process(process)
 
