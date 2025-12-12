@@ -1,0 +1,10 @@
+{
+  "typeCheckingMode": "strict",
+  "reportGeneralTypeIssues": "warning",
+  "reportAssignmentType": "warning",
+  "reportArgumentType": "warning",
+  "reportReturnType": "warning",
+  "reportIncompatibleVariableOverride": "warning",
+  "reportIncompatibleMethodOverride": "warning"
+}
+

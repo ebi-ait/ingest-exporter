@@ -3,7 +3,6 @@ from hca_ingest.api.ingestapi import IngestApi
 from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob, ExportContextState
 from exporter.metadata.resource import MetadataResource
 from exporter.session_context import SessionContext
-from requests import Response
 
 
 class IngestService:
@@ -41,9 +40,9 @@ class IngestService:
         job_dict: dict = self.__get_job(job_id)
         return ExportJob(job_dict)
 
-    def get_job_if_exists(self, job_id: str) -> 'ExportJob | None':
+    def get_job_if_exists(self, job_id: str):
         job_url = self.get_job_url(job_id)
-        response: Response = self.api.session.get(job_url, headers=self.api.get_headers())
+        response = self.api.session.get(job_url, headers=self.api.get_headers())
         if response.ok:
             return ExportJob(response.json())
 
@@ -52,11 +51,11 @@ class IngestService:
         return self.api.get_link_from_resource(job_dict, "submission")
 
     def job_exists_with_submission(self, job_id) -> bool:
-        submission_url: bool = self.get_submission_url_from_job(job_id)
+        submission_url: str = self.get_submission_url_from_job(job_id)
         return submission_url and not submission_url.endswith('/submissionEnvelopes')
 
     def get_submission_uuid_from_job(self, job_id: str) -> str:
-        submission_url:str = self.job_exists_with_submission(job_id)
+        submission_url: str = self.get_submission_url_from_job(job_id)
         return self.api.get_object_uuid(submission_url)
 
     def get_job_url(self, job_id: str) -> str:
