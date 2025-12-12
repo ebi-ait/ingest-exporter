@@ -3,6 +3,7 @@ from hca_ingest.api.ingestapi import IngestApi
 from exporter.ingest.export_job import ExportEntity, ExportJobState, ExportJob, ExportContextState
 from exporter.metadata.resource import MetadataResource
 from exporter.session_context import SessionContext
+from requests import Response
 
 
 class IngestService:
@@ -19,7 +20,7 @@ class IngestService:
         )
         self._maybe_complete_job(job_id)
 
-    def _maybe_complete_job(self, job_id):
+    def _maybe_complete_job(self, job_id: str):
         export_job:ExportJob = self.get_job(job_id)
         submission_uuid = self.get_submission_uuid_from_job(job_id)
         with SessionContext(logger=self.logger, context={'submission_uuid': submission_uuid}):
@@ -37,22 +38,25 @@ class IngestService:
         self.api.patch(job_url, json={"status": ExportJobState.EXPORTED.value})
 
     def get_job(self, job_id: str) -> ExportJob:
-        job_dict = self.__get_job(job_id)
+        job_dict: dict = self.__get_job(job_id)
         return ExportJob(job_dict)
 
-    def get_job_if_exists(self, job_id: str):
+    def get_job_if_exists(self, job_id: str) -> 'ExportJob | None':
         job_url = self.get_job_url(job_id)
-        response = self.api.session.get(job_url, headers=self.api.get_headers())
+        response: Response = self.api.session.get(job_url, headers=self.api.get_headers())
         if response.ok:
             return ExportJob(response.json())
 
-    def job_exists_with_submission(self, job_id) -> bool:
+    def get_submission_url_from_job(self, job_id: str) -> str:
         job_dict = self.__get_job_if_exists(job_id)
-        submission_link = self.api.get_link_from_resource(job_dict, "submission")
-        return submission_link and not submission_link.endswith('/submissionEnvelopes')
+        return self.api.get_link_from_resource(job_dict, "submission")
+
+    def job_exists_with_submission(self, job_id) -> bool:
+        submission_url: bool = self.get_submission_url_from_job(job_id)
+        return submission_url and not submission_url.endswith('/submissionEnvelopes')
 
     def get_submission_uuid_from_job(self, job_id: str) -> str:
-        submission_url = self.job_exists_with_submission(job_id)
+        submission_url:str = self.job_exists_with_submission(job_id)
         return self.api.get_object_uuid(submission_url)
 
     def get_job_url(self, job_id: str) -> str:
@@ -97,7 +101,7 @@ class IngestService:
         job_json = self.api.patch(f'{job_url}/context', json={context: state.value}).json()
         return ExportJob(job_json)
 
-    def __get_job(self, job_id: str):
+    def __get_job(self, job_id: str) -> dict:
         job_url = self.get_job_url(job_id)
         return self.api.get(job_url).json()
 

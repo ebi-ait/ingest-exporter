@@ -7,6 +7,19 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "editor.gotoLocation.multipleDefinitions": "goto",
+    "editor.gotoLocation.multipleReferences": "goto",
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportGeneralTypeIssues": "warning",
+        "reportAssignmentType": "warning",
+        "reportArgumentType": "warning",
+        "reportReturnType": "warning",
+        "reportIncompatibleVariableOverride": "warning",
+        "reportIncompatibleMethodOverride": "warning"
+    }
 }
 
