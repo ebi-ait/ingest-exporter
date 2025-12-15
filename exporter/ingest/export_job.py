@@ -24,7 +24,7 @@ class ExportEntity:
     assay_process_id: str
     errors: List[ExportError]
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, object]:
         """
         converts to a JSON as represented in ingest-core API
         """

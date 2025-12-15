@@ -46,11 +46,11 @@ class TerraTransferResponder:
         if message.attributes.get("eventType", "") != "TRANSFER_OPERATION_SUCCESS":
             self.logger.error(f'Received unexpected message: {message.attributes}')
             return message.nack()
-        transfer_name = message.attributes.get("transferJobName", "")
+        transfer_name: str = message.attributes.get("transferJobName", "")
         if not transfer_name.startswith('transferJobs/'):
             self.logger.error(f'Could not parse message: {message.attributes}')
             return message.nack()
-        export_job_id = transfer_name.replace('transferJobs/', '')
+        export_job_id:str = transfer_name.replace('transferJobs/', '')
         with SessionContext(logger=self.logger, context={'export_job_id': export_job_id}):
             job = self.ingest.get_job_if_exists(export_job_id)
             if not job:
@@ -66,7 +66,6 @@ class TerraTransferResponder:
 
     def handle_data_transfer_complete(self, message: Message, export_job: ExportJob):
         submission_uuid = self.ingest.get_submission_uuid_from_job(export_job.job_id)
-        # with SessionContext(logger=self.logger, context={'export_job_id': export_job.job_id, 'submission_uuid':submission_uuid}):
         self.logger.info(f'submission_uuid: {submission_uuid} - Received message that data transfer is complete, informing ingest')
         self.ingest.set_data_file_transfer(export_job.job_id, ExportContextState.COMPLETE)
         self.logger.info(f'submission_uuid: {submission_uuid} - Acknowledging data transfer complete message')
